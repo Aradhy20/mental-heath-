@@ -1,20 +1,27 @@
 import sys
 import os
+from fastapi import FastAPI
 
-# Robust path addition
-root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if root_path not in sys.path:
-    sys.path.append(root_path)
+# Add root directory to sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+# Initialize app with fallback immediately to satisfy static analysis
+app = FastAPI(title="Fallback App")
 
 try:
-    from backend.api.index import app
-except ImportError:
-    from fastapi import FastAPI
-    app = FastAPI()
-    @app.get("/api")
-    async def api_root():
-        return {"message": "Fallback app in root api/index.py"}
-    
-    @app.get("/api/health")
-    async def health():
-        return {"status": "ok", "source": "fallback"}
+    # Try importing the real app from the backend package
+    from backend.api.index import app as backend_app
+    app = backend_app
+except ImportError as e:
+    # If import fails, we keep the fallback app but add a health route debugging info
+    @app.get("/api/deployment-debug")
+    async def debug():
+        return {
+            "status": "import_error", 
+            "message": f"Could not import backend.api.index: {str(e)}",
+            "cwd": os.getcwd(),
+            "path": sys.path
+        }
+
