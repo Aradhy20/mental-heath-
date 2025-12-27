@@ -1,29 +1,30 @@
 import sys
 import os
 
-# Add root and backend directories to sys.path
+# Add the root directory to sys.path so we can import 'backend'
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-backend_dir = os.path.join(root_dir, 'backend')
-
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
+
+from fastapi import FastAPI
 
 try:
-    # Try importing as a package from root
-    from backend.api.index import app
-except ImportError:
-    try:
-        # Try importing directly if backend_dir is in path
-        from api.index import app as backend_app
-        app = backend_app
-    except ImportError:
-        from fastapi import FastAPI
-        app = FastAPI()
-        @app.get("/api/health")
-        async def health():
-            return {"status": "error", "message": "Could not import backend app"}
+    # Try importing the app from the backend package
+    from backend.api.index import app as backend_app
+    app = backend_app
+except ImportError as e:
+    # Diagnostic app to show the error if it fails on Vercel
+    app = FastAPI()
+    @app.get("/api/health")
+    async def health():
+        return {
+            "status": "partial_error", 
+            "message": f"Could not import backend.api.index. Error: {str(e)}",
+            "sys_path": sys.path,
+            "cwd": os.getcwd()
+        }
 
-__all__ = ["app"]
+# For Vercel discovery
+app = app
+
 
