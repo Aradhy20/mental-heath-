@@ -1,0 +1,41 @@
+services:
+  # Backend: Python/FastAPI with Docker
+  - type: web
+    name: mental-health-backend
+    env: docker
+    plan: free
+    region: singapore # Optimized for India
+    dockerfilePath: Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: MONGO_DETAILS
+        sync: false # User will be prompted to enter this securely
+      - key: MONGO_DB_NAME
+        value: mental_health_db
+      - key: PORT
+        value: 8000
+    autoDeploy: true
+
+  # Frontend: Next.js
+  - type: web
+    name: mental-health-frontend
+    env: node
+    plan: free
+    region: singapore
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: mental-health-backend
+          property: url
+      # We also map the server-side var just in case
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: mental-health-backend
+          property: url
