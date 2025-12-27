@@ -44,7 +44,7 @@ def check_dependencies():
     required = {
         'fastapi': 'FastAPI',
         'uvicorn': 'Uvicorn',
-        'sqlalchemy': 'SQLAlchemy',
+        'motor': 'Motor (MongoDB)',
         'pydantic': 'Pydantic'
     }
     
@@ -66,14 +66,11 @@ def check_dependencies():
 
 def start_service(name, port, enhanced=True):
     """Start a single service"""
-    service_dir = Path(f"{name}_service")
-    
-    if enhanced and (service_dir / "main_enhanced.py").exists():
-        script = "main_enhanced.py"
-        version = "v2.0 (Enhanced)"
-    else:
-        script = "main.py"
-        version = "v1.0"
+    # Fix path resolution
+    base_dir = Path(__file__).parent
+    service_dir = base_dir / f"{name}_service"
+    script = "main.py"
+    version = "v3.0 (MongoDB)"
     
     print_info(f"Starting {name.title()} Service {version} on port {port}...")
     
@@ -102,6 +99,7 @@ def start_service(name, port, enhanced=True):
     except Exception as e:
         print_error(f"Failed to start {name} service: {e}")
         return None
+
 
 def main():
     print_header("Backend Services Launcher")
