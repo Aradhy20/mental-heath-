@@ -1,0 +1,46 @@
+# Exclude large and unnecessary directories from Docker image
+.git
+.github
+.venv
+venv
+ENV
+env
+node_modules
+frontend/node_modules
+backend-express/node_modules
+
+# Build artifacts
+.next
+frontend/.next
+out
+build
+dist
+
+# Large data files
+data/
+*.h5
+*.pth
+*.onnx
+*.pkl
+*.db
+*.sqlite
+mental_health.db
+
+# Logs and temp files
+logs/
+*.log
+npm-debug.log*
+tmp/
+temp/
+*.tmp
+
+# Documentation and diagrams
+TECHNICAL_APPENDICES.md
+MINDFUL_AI_SRS_DOCUMENT.md
+*.png
+*.jpg
+*.docx
+
+# OS files
+.DS_Store
+Thumbs.db
