@@ -52,7 +52,10 @@ export default function AnimatedInput({
 
                 {/* Input */}
                 <motion.input
-                    {...props}
+                    {...(() => {
+                        const { onAnimationStart, onDragStart, onDragEnd, onDrag, ...rest } = props as any;
+                        return rest;
+                    })()}
                     className={`
             w-full px-4 py-3 rounded-xl border-2 transition-colors
             ${icon ? 'pl-12' : ''}
@@ -168,7 +171,10 @@ export function AnimatedTextarea({
     return (
         <div className={`relative ${className}`}>
             <motion.textarea
-                {...props}
+                {...(() => {
+                    const { onAnimationStart, onDragStart, onDragEnd, onDrag, ...rest } = props as any;
+                    return rest;
+                })()}
                 className={`
           w-full px-4 py-3 rounded-xl border-2 transition-colors resize-none
           ${error ? 'border-red-500 focus:border-red-600' :
