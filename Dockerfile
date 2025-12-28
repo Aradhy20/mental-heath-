@@ -12,14 +12,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements files
-COPY backend/requirements.txt .
-COPY backend/requirements_all.txt .
-COPY backend/shared/requirements.txt ./backend/shared/
+COPY backend/requirements_prod.txt ./requirements.txt
 
-# Install dependencies (incorporating all requirement files)
-# Using --no-cache-dir to minimize image size
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements_all.txt
+# Install dependencies with CPU optimization
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend source code
 COPY backend ./backend
