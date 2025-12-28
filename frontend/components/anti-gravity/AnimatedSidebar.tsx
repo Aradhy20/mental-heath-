@@ -23,7 +23,7 @@ import ThemeToggle from './ThemeToggle'
 import { useAuthStore } from '@/lib/store/auth-store'
 
 const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
     { icon: Smile, label: 'Mood Tracker', href: '/mood' },
     { icon: BookOpen, label: 'Journal', href: '/journal' },
     { icon: MessageCircle, label: 'AI Chat', href: '/chat' },
@@ -45,7 +45,7 @@ const AnimatedSidebar = () => {
         <motion.div
             initial={{ width: 280 }}
             animate={{ width: isCollapsed ? 80 : 280 }}
-            className="hidden md:flex flex-col h-screen sticky top-0 left-0 z-40 bg-white/80 dark:bg-black/40 backdrop-blur-xl border-r border-white/20 dark:border-white/10 shadow-glass transition-all duration-300"
+            className="hidden md:flex flex-col h-screen sticky top-0 left-0 z-40 bg-white/80 dark:bg-black/40 backdrop-blur-md border-r border-white/20 dark:border-white/10 shadow-glass transition-all duration-300"
         >
             {/* Header */}
             <div className="p-6 flex items-center justify-between">

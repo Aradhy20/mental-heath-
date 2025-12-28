@@ -8,14 +8,14 @@ import { usePathname } from 'next/navigation'
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
-  
+
   const navItems = [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'AI Chat', href: '/chat' },
-    { name: 'Journaling', href: '/journaling' },
+    { name: 'Journaling', href: '/journal' },
     { name: 'Insights', href: '/insights' },
     { name: 'Meditation', href: '/meditation' },
-    { name: 'Doctor Finder', href: '/doctor-finder' },
+    { name: 'Specialists', href: '/specialists' },
   ]
 
   return (
@@ -42,11 +42,10 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  pathname === item.href
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${pathname === item.href
                     ? 'text-purple-600 bg-purple-50/50'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
-                }`}
+                  }`}
               >
                 {item.name}
               </Link>
@@ -103,11 +102,10 @@ const Navbar = () => {
             <Link
               key={item.name}
               href={item.href}
-              className={`block px-3 py-2 rounded-lg text-base font-medium ${
-                pathname === item.href
+              className={`block px-3 py-2 rounded-lg text-base font-medium ${pathname === item.href
                   ? 'text-purple-600 bg-purple-50/50'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
-              }`}
+                }`}
               onClick={() => setIsMenuOpen(false)}
             >
               {item.name}

@@ -47,8 +47,8 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (credentials: any) => api.post('/auth/login', credentials),
   register: (userData: any) => api.post('/auth/register', userData),
-  requestOTP: (phone: string) => api.post('/auth/request-otp', { phone }),
-  verifyOTP: (phone: string, otp: string) => api.post('/auth/verify-otp', { phone, otp }),
+  requestOTP: (data: { phone?: string; email?: string }) => api.post('/auth/request-otp', data),
+  verifyOTP: (data: { phone?: string; email?: string; otp: string }) => api.post('/auth/verify-otp', data),
   getMe: () => api.get('/auth/me'),
 };
 
@@ -74,6 +74,7 @@ export const doctorsAPI = {
 
 export const userAPI = {
   getDashboardStats: () => api.get('/users/dashboard-stats'),
+  getMoodHistory: () => api.get('/mood'),
 };
 
 export default api;

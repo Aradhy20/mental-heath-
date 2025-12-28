@@ -15,7 +15,7 @@ interface SidebarItem {
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true)
   const pathname = usePathname()
-  
+
   const menuItems: SidebarItem[] = [
     {
       id: 'dashboard',
@@ -45,7 +45,7 @@ const Sidebar = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       ),
-      href: '/journaling'
+      href: '/journal'
     },
     {
       id: 'insights',
@@ -75,7 +75,7 @@ const Sidebar = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
-      href: '/doctor-finder'
+      href: '/specialists'
     },
     {
       id: 'profile',
@@ -133,9 +133,8 @@ const Sidebar = () => {
           animate={{ x: isOpen ? 0 : '-100%' }}
           exit={{ x: '-100%' }}
           transition={{ type: 'spring', damping: 20 }}
-          className={`fixed left-0 top-0 h-full w-64 bg-white/90 backdrop-blur-xl shadow-xl z-40 glass-card ${
-            isOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 md:static md:h-screen`}
+          className={`fixed left-0 top-0 h-full w-64 bg-white/90 backdrop-blur-xl shadow-xl z-40 glass-card ${isOpen ? 'translate-x-0' : '-translate-x-full'
+            } md:translate-x-0 md:static md:h-screen`}
         >
           <div className="flex flex-col h-full">
             {/* Logo */}
@@ -153,11 +152,10 @@ const Sidebar = () => {
                   <li key={item.id}>
                     <Link
                       href={item.href}
-                      className={`flex items-center px-4 py-3 rounded-2xl transition-all duration-200 ${
-                        pathname === item.href
+                      className={`flex items-center px-4 py-3 rounded-2xl transition-all duration-200 ${pathname === item.href
                           ? 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 text-purple-600 border border-purple-200'
                           : 'text-gray-600 hover:bg-gray-100/50 hover:text-gray-900'
-                      }`}
+                        }`}
                     >
                       <span className={`mr-3 ${pathname === item.href ? 'text-purple-600' : 'text-gray-400'}`}>
                         {item.icon}

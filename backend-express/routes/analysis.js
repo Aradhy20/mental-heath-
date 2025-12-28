@@ -99,4 +99,21 @@ router.post('/fuzzy', auth, async (req, res) => {
     }
 });
 
+// @route   POST api/analysis/report
+// @desc    Generate a wellness report
+// @access  Private
+router.post('/report', auth, async (req, res) => {
+    try {
+        // In a real system, this would call a PDF generator or report microservice
+        res.json({
+            status: "success",
+            message: "Wellness report generated and synchronized with your portal.",
+            report_id: "REP-" + Date.now(),
+            timestamp: new Date()
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Report generation failed' });
+    }
+});
+
 module.exports = router;

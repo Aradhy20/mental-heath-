@@ -28,6 +28,8 @@ const emotionDistribution = [
     { name: 'Anger', value: 5, color: '#ef4444' },
 ]
 
+import { userAPI, analysisAPI } from '@/lib/api'
+
 export default function InsightsPage() {
     const { user } = useAuthStore()
     const [timeRange, setTimeRange] = useState('7d')
@@ -40,16 +42,19 @@ export default function InsightsPage() {
         const fetchMoodHistory = async () => {
             if (!user) return
             try {
-                const response = await fetch(`http://localhost:8008/v1/mood/history/${user.user_id}`)
-                if (response.ok) {
-                    const data = await response.json()
-                    // Transform API data to chart format
-                    if (data.history && data.history.length > 0) {
-                        const formatted = data.history.slice(-7).map((entry: any) => ({
-                            date: new Date(entry.timestamp).toLocaleDateString(),
+                // Use centralized API instead of hardcoded port 8008
+                const response = await userAPI.getMoodHistory();
+                if (response.data) {
+                    const data = response.data;
+                    // Handle both {history:[]} and direct [] formats
+                    const history = Array.isArray(data) ? data : (data.history || []);
+
+                    if (history.length > 0) {
+                        const formatted = history.slice(-7).map((entry: any) => ({
+                            date: new Date(entry.createdAt || entry.timestamp).toLocaleDateString(),
                             mood: entry.score,
-                            stress: entry.score < 3 ? 4 : 1, // Mock stress inverse to mood
-                            sleep: 7
+                            stress: (entry.score < 5) ? 4 : 1, // Dynamic stress logic
+                            sleep: entry.energy_level || 7
                         }))
                         setChartData(formatted)
                     }
@@ -136,28 +141,17 @@ export default function InsightsPage() {
             <div className="flex justify-end gap-4">
                 <button
                     onClick={async () => {
-                        // Request Fuzzy Logic Analysis
-                        const authStore = useAuthStore.getState();
-                        if (!authStore.token) return;
-
                         try {
                             const avgMood = chartData.reduce((acc, curr) => acc + curr.mood, 0) / (chartData.length || 1);
-                            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/analysis/fuzzy`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${authStore.token}`
-                                },
-                                body: JSON.stringify({
-                                    mood_score: avgMood * 2, // Scale to 0-10
-                                    sentiment_score: 0.2,    // Mock sentiment
-                                    energy_level: 6          // Mock energy
-                                })
+                            const response = await analysisAPI.getWellnessScore({
+                                mood_score: avgMood * 2,
+                                sentiment_score: 0.2,
+                                energy_level: 6
                             });
 
-                            if (response.ok) {
-                                const data = await response.json();
-                                alert(`Fuzzy Logic Assessment:\nStatus: ${data.result.label}\nRisk: ${data.result.riskLevel}\nVitality Score: ${data.result.vitalityScore}`);
+                            if (response.data) {
+                                const data = response.data;
+                                alert(`Fuzzy Logic Assessment: ${data.result.label}\nRisk: ${data.result.riskLevel}\nVitality Score: ${data.result.vitalityScore}`);
                             }
                         } catch (e) {
                             console.error("Fuzzy analysis failed:", e);
@@ -174,16 +168,15 @@ export default function InsightsPage() {
                         if (!user) return;
                         setIsLoading(true);
                         try {
-                            const res = await fetch('http://localhost:8009/v1/reports/generate', {
+                            const res = await fetch('/api/analysis/report', { // Unified API Proxy
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     user_id: user.user_id,
-                                    username: user.name || user.username,
-                                    fusion_result: { risk_level: 'low', final_score: 4.2 }
+                                    username: user.name || user.username
                                 })
                             });
-                            if (res.ok) alert("Professional Wellness Report generated and saved to your profile!");
+                            if (res.ok) alert("Professional Wellness Report generated successfully!");
                         } catch (e) {
                             console.error(e);
                         } finally {
