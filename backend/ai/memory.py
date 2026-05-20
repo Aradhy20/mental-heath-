@@ -18,7 +18,7 @@ class MemorySystem:
             return []
             
         try:
-            query = select(DBChatHistory).where(DBChatHistory.user_id == user_id).order_by(DBChatHistory.created_at.desc()).limit(10)
+            query = select(DBChatHistory).where(DBChatHistory.user_id == user_id).order_by(DBChatHistory.created_at.desc()).limit(5)
             result = await db.execute(query)
             rows = result.scalars().all()
             # Reverse to get chronological order for the LLM

@@ -176,9 +176,9 @@ class ConversationEngine:
 
         suggested_action = self._get_action(emotion, user_id)
 
-        # ── Cached learning_loop call ──────────────────────────────────────────
+        # ── Cached learning_loop call (refresh every 60 requests) ────────────
         _CACHE_CALL_COUNT += 1
-        if _CACHE_CALL_COUNT % _CACHE_REFRESH_EVERY == 1 or not _CACHED_RANKED_STYLES:
+        if not _CACHED_RANKED_STYLES or (_CACHE_CALL_COUNT % _CACHE_REFRESH_EVERY == 0):
             from ai.learning_loop import learning_loop
             _CACHED_RANKED_STYLES = learning_loop.rank_interventions()
 
@@ -195,38 +195,45 @@ class ConversationEngine:
         tone = personalization_engine.get_tone_adjustment(twin_profile)
 
         # ── Build prompt using fast string join (avoids += overhead) ──────────
-        parts = [
-            f"You are {agent_role} at MindfulAI.",
-            f"Linguistic Protocol: {tone}. Communicate with clinical sophistication and varied sentence structures.",
-            "",
-            "CORE REQUIREMENTS:",
-            "1. NEVER use clichéd openers like 'I understand', 'That sounds difficult', or 'As an AI'.",
-            "2. Mirror the user's vocabulary and energy level with genuine empathy.",
-            "3. STYLE: Be human, not a therapist manual. No paragraphs. Use direct language.",
-            "4. RESPONSE LENGTH: Keep it concise. 2-3 sentences is ideal, but extend to 4 if a detailed clinical exercise is being explained.",
-            "5. HELPFULNESS: Always prioritize being genuinely helpful. If the user is struggling, provide a specific, actionable psychological tool immediately.",
-            "",
-            "RESPONSE LOGIC:",
-            "1. Mirror & Validate: Acknowledge the user's state with deep, non-robotic mirroring.",
-            "2. Actionable Intervention: Suggest a specific tool from the MindfulAI library: \"{suggested_action}\"",
-            "3. Empowerment: End with a short sentence that reinforces their agency and resilience.",
-        ]
+        if mode == "CRISIS":
+            parts = [
+                "You are a calm, highly trained crisis counselor at MindfulAI.",
+                "",
+                "CRITICAL CRISIS OVERRIDE: The user is in danger. Your ONLY goal is their immediate safety.",
+                "You MUST generate the same calm, direct safety message in all three XML tags below. Promptly instruct them to call 988 or text HOME to 741741 immediately.",
+                "",
+                "XML TAGS REQUIRED:",
+                "<short>Your safety is the absolute priority. Please connect with the Crisis Lifeline by calling 988 or texting HOME to 741741 immediately. I am here with you.</short>",
+                "<deep>I hear you, and please know that you are not alone in this moment. Your safety is what matters most right now. Please call 988 or text HOME to 741741 to reach a crisis counselor immediately. I'm here.</deep>",
+                "<coaching>Please take a gentle breath. I need you to prioritize your safety right now. Call 988 or text HOME to 741741 immediately to speak to someone who can support you. Please do this for yourself.</coaching>"
+            ]
+        else:
+            parts = [
+                f"You are {agent_role} at MindfulAI.",
+                f"Linguistic Protocol: {tone}. Communicate with clinical sophistication.",
+                "",
+                "CRITICAL RESPONSE INSTRUCTION: You MUST generate exactly THREE distinct candidate responses, each representing a different response style. You MUST enclose each style response inside the exact XML tags specified below. DO NOT include any introductory or concluding text outside these XML tags.",
+                "",
+                "XML TAGS REQUIRED:",
+                "<short>[A highly concise, direct, 1-2 sentence response with absolute minimal fluff]</short>",
+                "<deep>[A deeply empathetic, validating response of 2-3 sentences reflecting a warm clinical alliance]</deep>",
+                "<coaching>[A forward-looking, wellness-oriented response of 2-3 sentences suggesting a specific micro-action or reflection based on the intervention: \"" + suggested_action + "\"]</coaching>",
+                "",
+                "CORE REQUIREMENTS FOR ALL CANDIDATES:",
+                "1. NEVER use clichéd openers like 'I understand', 'That sounds difficult', or 'As an AI'.",
+                "2. Mirror the user's vocabulary and energy level with genuine empathy.",
+                "3. STYLE: Be supportive, human, and direct."
+            ]
 
-        if recent_moods:
+        if recent_moods and mode != "CRISIS":
             parts += ["", f"PERSONAL HISTORY: {recent_moods}"]
-        if memory_timestamps:
+        if memory_timestamps and mode != "CRISIS":
             parts += ["", f"MEMORY LOG: {memory_timestamps}"]
-        if twin_insight:
+        if twin_insight and mode != "CRISIS":
             parts += ["", f"CLINICAL INSIGHT: {twin_insight}"]
-        if burnout_warning:
+        if burnout_warning and mode != "CRISIS":
             parts += ["", burnout_warning]
 
-        if mode == "CRISIS":
-            parts += [
-                "",
-                "CRISIS OVERRIDE: Forget structure. The user may be in danger.",
-                "Your ONLY goal is their immediate safety. Tell them to call 988 or text HOME to 741741 NOW."
-            ]
 
         system_prompt = "\n".join(parts)
 

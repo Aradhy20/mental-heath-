@@ -1,270 +1,232 @@
-"use client"
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import { MapPin, Phone, ExternalLink, Navigation, Search } from 'lucide-react';
 
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  MapPin, 
-  Search, 
-  Stethoscope, 
-  Zap, 
-  Heart, 
-  Navigation, 
-  Star,
-  Activity,
-  Globe,
-  Dumbbell,
-  Wind
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+const RESOURCE_TYPES = ['All', 'Psychiatrist', 'Psychologist', 'Clinic', 'Helpline'];
 
-const CATEGORIES = [
-  { id: 'all', label: 'All Resources', icon: Globe },
-  { id: 'mental', label: 'Mental Health', icon: Stethoscope },
-  { id: 'yoga', label: 'Yoga & Zen', icon: Wind },
-  { id: 'fitness', label: 'Neuro-Fitness', icon: Dumbbell }
-]
+const MOCK_RESOURCES = [
+  { id: 1, name: 'NIMHANS', type: 'Clinic', address: 'Hosur Road, Bangalore', phone: '080-46110007', lat: 12.9415, lng: 77.5955 },
+  { id: 2, name: 'iCall Counselling', type: 'Helpline', address: 'Online / Mumbai', phone: '9152987821', lat: 19.0760, lng: 72.8777 },
+  { id: 3, name: 'Vandrevala Foundation', type: 'Helpline', address: 'Pan-India', phone: '1860-2662-345', lat: 18.9667, lng: 72.8333 },
+  { id: 4, name: 'The Mind Research Foundation', type: 'Clinic', address: 'Chennai', phone: '044-24747050', lat: 13.0827, lng: 80.2707 },
+  { id: 5, name: 'LVPrasad Psychiatry', type: 'Psychiatrist', address: 'Hyderabad', phone: '040-30612345', lat: 17.3850, lng: 78.4867 },
+];
 
-const RESOURCES = [
-  {
-    id: 1,
-    name: "Neon Zen Yoga Collective",
-    category: "yoga",
-    address: "42 Market St, San Francisco, CA",
-    rating: 4.9,
-    distance: "0.4 miles",
-    specialization: "Hatha & Neural Grounding",
-    status: "Open Now",
-    image: "/assets/yoga-mock.jpg"
-  },
-  {
-    id: 2,
-    name: "Summit Mindful Psychiatry",
-    category: "mental",
-    address: "101 California St, San Francisco, CA",
-    rating: 5.0,
-    distance: "1.2 miles",
-    specialization: "CBT & Biofeedback",
-    status: "Available",
-    image: "/assets/doctor-mock.jpg"
-  },
-  {
-    id: 3,
-    name: "Silicon Neuro-Gym",
-    category: "fitness",
-    address: "500 Howard St, San Francisco, CA",
-    rating: 4.8,
-    distance: "0.8 miles",
-    specialization: "Stress-Release HIIT",
-    status: "Busy",
-    image: "/assets/gym-mock.jpg"
-  },
-  {
-    id: 4,
-    name: "Aradhy Wellness Annex",
-    category: "mental",
-    address: "Mission District, San Francisco, CA",
-    rating: 5.0,
-    distance: "2.1 miles",
-    specialization: "Clinical AI Integration",
-    status: "MindfulAI Partner",
-    image: "/assets/annex-mock.jpg"
-  },
-    {
-    id: 5,
-    name: "Flow State Mindfulness",
-    category: "yoga",
-    address: " Hayes Valley, San Francisco, CA",
-    rating: 4.7,
-    distance: "1.5 miles",
-    specialization: "Pranayama & Flow",
-    status: "Closing Soon",
-    image: "/assets/flow-mock.jpg"
-  }
-]
+const TYPE_COLORS: Record<string, string> = {
+  Psychiatrist: '#818CF8',
+  Psychologist:  '#34D399',
+  Clinic:        '#FBBF24',
+  Helpline:      '#F87171',
+};
 
-export default function NearbySupportPage() {
-  const [activeCategory, setActiveCategory] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
+export default function NearbyPage() {
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [userCity, setUserCity] = useState('');
 
-  const filteredResources = RESOURCES.filter(res => {
-    const matchesCategory = activeCategory === 'all' || res.category === activeCategory
-    const matchesSearch = res.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         res.specialization.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const filtered = MOCK_RESOURCES.filter((r) => {
+    const matchType = filter === 'All' || r.type === filter;
+    const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
+                       r.address.toLowerCase().includes(search.toLowerCase());
+    return matchType && matchSearch;
+  });
+
+  const handleLocate = () => {
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCity('Your location detected ✓');
+        setLocating(false);
+      },
+      () => {
+        setUserCity('Location access denied');
+        setLocating(false);
+      }
+    );
+  };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 pb-20">
-      {/* Header & Search */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-4"
-        >
-          <h1 className="text-5xl font-black tracking-tight leading-none uppercase">
-            Nearby <span className="text-primary italic">Support</span>
-          </h1>
-          <p className="text-muted-foreground text-lg font-medium max-w-md">
-            Bridging the gap between AI guidance and <span className="text-foreground">physical-world healing centers.</span>
-          </p>
-        </motion.div>
-
-        <div className="w-full lg:w-[400px]">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search local resources..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/5 border border-black/5 rounded-3xl pl-12 pr-6 py-5 text-sm outline-none focus:border-primary/50 transition-all font-bold tracking-tight shadow-xl"
-            />
-          </div>
-        </div>
+    <div className="page-enter" style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 className="headline-md">Nearby Resources</h1>
+        <p style={{ color: 'var(--on-surface-muted)', marginTop: '0.25rem' }}>
+          Mental health professionals and helplines near you
+        </p>
       </div>
 
-      {/* Category Selection */}
-      <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-        {CATEGORIES.map((cat) => (
+      {/* Controls */}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem', alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--on-surface-muted)' }} />
+          <input
+            id="nearby-search"
+            className="input"
+            placeholder="Search by name or city…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ paddingLeft: '2.25rem' }}
+          />
+        </div>
+        <button
+          onClick={handleLocate}
+          className="btn btn-tonal"
+          disabled={locating}
+          style={{ gap: '0.375rem', fontSize: '0.875rem' }}
+        >
+          <Navigation size={15} />
+          {locating ? 'Locating…' : userCity || 'Use My Location'}
+        </button>
+      </div>
+
+      {/* Type filters */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+        {RESOURCE_TYPES.map((t) => (
           <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={cn(
-              "flex items-center gap-3 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border shadow-lg",
-              activeCategory === cat.id 
-                ? "bg-primary border-primary/50 text-white shadow-primary/20 scale-105" 
-                : "bg-black/5 border-black/5 text-muted-foreground hover:bg-black/10"
-            )}
+            key={t}
+            onClick={() => setFilter(t)}
+            className={`btn ${filter === t ? 'btn-tonal' : 'btn-ghost'}`}
+            style={{ fontSize: '0.8rem', padding: '0.375rem 0.875rem' }}
           >
-            <cat.icon size={16} />
-            {cat.label}
+            {t !== 'All' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: TYPE_COLORS[t], display: 'inline-block', marginRight: 4 }} />}
+            {t}
           </button>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-10">
-        {/* Resource List */}
-        <div className="lg:col-span-2 space-y-8">
-          <AnimatePresence mode="popLayout">
-            {filteredResources.map((res, i) => (
-              <motion.div
-                key={res.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative glass rounded-[2.5rem] border border-black/5 p-8 hover:border-primary/30 transition-all cursor-pointer overflow-hidden shadow-2xl"
+      {/* Main layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.25rem' }}>
+        {/* Map placeholder */}
+        <div
+          className="glass-card"
+          style={{
+            height: 480,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+            background: 'var(--surface-2)',
+          }}
+        >
+          {/* OSM embed placeholder — in production connect to leaflet/mapbox */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(52,211,153,0.05))',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem',
+          }}>
+            {/* Grid overlay to simulate map */}
+            <svg width="100%" height="100%" style={{ position: 'absolute', opacity: 0.08 }}>
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--primary)" strokeWidth="0.5" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+
+            {/* Pins */}
+            {filtered.map((r, i) => (
+              <button
+                key={r.id}
+                onClick={() => setSelected(r.id)}
+                title={r.name}
+                style={{
+                  position: 'absolute',
+                  left: `${20 + (i * 14) % 60}%`,
+                  top: `${25 + (i * 18) % 50}%`,
+                  background: selected === r.id ? 'var(--primary)' : TYPE_COLORS[r.type] ?? '#818CF8',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '0.25rem 0.625rem',
+                  fontSize: '0.7rem',
+                  fontFamily: 'inherit',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: `0 2px 12px ${TYPE_COLORS[r.type] ?? '#818CF8'}60`,
+                  transform: selected === r.id ? 'scale(1.15)' : 'scale(1)',
+                  transition: 'all var(--transition)',
+                  zIndex: selected === r.id ? 10 : 1,
+                  display: 'flex', alignItems: 'center', gap: '0.25rem',
+                }}
               >
-                <div className="absolute top-0 right-0 p-8">
-                   <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl text-primary group-hover:scale-110 transition-transform">
-                      <Navigation size={22} />
-                   </div>
-                </div>
-
-                <div className="flex gap-8 items-center">
-                   <div className={cn(
-                     "w-24 h-24 rounded-3xl flex items-center justify-center text-white shadow-2xl shrink-0 transition-transform group-hover:rotate-6",
-                     res.category === 'mental' ? "bg-gradient-to-br from-emerald-400 to-teal-600" :
-                     res.category === 'yoga' ? "bg-gradient-to-br from-violet-400 to-indigo-600" :
-                     "bg-gradient-to-br from-orange-400 to-rose-600"
-                   )}>
-                      {res.category === 'mental' ? <Stethoscope size={40} /> :
-                       res.category === 'yoga' ? <Wind size={40} /> :
-                       <Dumbbell size={40} />}
-                   </div>
-
-                   <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-3">
-                         <h3 className="text-2xl font-black tracking-tight">{res.name}</h3>
-                         <span className="px-3 py-1 bg-black/5 border border-black/5 rounded-full text-[10px] font-black uppercase tracking-tighter">{res.status}</span>
-                      </div>
-                      <p className="text-muted-foreground text-sm flex items-center gap-2">
-                        <MapPin size={14} className="text-primary" /> {res.address}
-                      </p>
-                      
-                      <div className="flex gap-4 pt-2">
-                         <div className="flex items-center gap-2 text-xs font-black uppercase text-amber-400">
-                            <Star size={14} fill="currentColor" /> {res.rating}
-                         </div>
-                         <div className="flex items-center gap-2 text-xs font-black uppercase text-muted-foreground">
-                            <Activity size={14} className="text-primary" /> {res.distance}
-                         </div>
-                         <div className="flex items-center gap-2 text-xs font-black uppercase text-primary">
-                            <Zap size={14} /> {res.specialization}
-                         </div>
-                      </div>
-                   </div>
-                </div>
-              </motion.div>
+                <MapPin size={11} /> {r.name.split(' ')[0]}
+              </button>
             ))}
-          </AnimatePresence>
+
+            <div style={{ textAlign: 'center', zIndex: 1, pointerEvents: 'none' }}>
+              <MapPin size={32} color="var(--primary)" style={{ marginBottom: '0.5rem', opacity: 0.4 }} />
+              <p style={{ color: 'var(--on-surface-muted)', fontSize: '0.875rem' }}>
+                Interactive map · {filtered.length} resources
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Decorative Neural Map */}
-        <div className="hidden lg:block lg:col-span-1">
-          <div className="sticky top-12 glass rounded-[3rem] border border-black/5 p-10 space-y-8 shadow-2xl relative overflow-hidden">
-             <div className="absolute inset-0 bg-primary/5 blur-[80px] rounded-full -translate-y-1/2" />
-             
-             <div className="relative z-10 space-y-6">
-                <div className="flex justify-between items-center">
-                   <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Neural Geography</h3>
-                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        {/* Resource list */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: 480, overflowY: 'auto' }}>
+          {filtered.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => setSelected(selected === r.id ? null : r.id)}
+              style={{
+                background: selected === r.id ? 'var(--primary-container)' : 'var(--glass-bg)',
+                backdropFilter: 'blur(24px)',
+                border: `1px solid ${selected === r.id ? 'var(--outline-strong)' : 'var(--glass-border)'}`,
+                borderRadius: 'var(--radius-md)',
+                padding: '1rem',
+                textAlign: 'left',
+                cursor: 'pointer',
+                transition: 'all var(--transition)',
+                fontFamily: 'inherit',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem' }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  background: `${TYPE_COLORS[r.type] ?? '#818CF8'}20`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <MapPin size={16} color={TYPE_COLORS[r.type] ?? '#818CF8'} />
                 </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.25rem' }}>{r.name}</div>
+                  <div style={{ color: 'var(--on-surface-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+                    <span className="badge" style={{ background: `${TYPE_COLORS[r.type]}18`, color: TYPE_COLORS[r.type], fontSize: '0.65rem', marginRight: '0.25rem' }}>{r.type}</span>
+                    {r.address}
+                  </div>
+                  {selected === r.id && (
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <a href={`tel:${r.phone}`} className="btn btn-tonal" style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}>
+                        <Phone size={12} /> {r.phone}
+                      </a>
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lng}#map=15/${r.lat}/${r.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-ghost"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+                      >
+                        <ExternalLink size={12} /> Directions
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))}
 
-                <div className="aspect-square bg-zinc-950/50 rounded-[2rem] border border-black/5 flex items-center justify-center relative overflow-hidden group">
-                   <div className="absolute inset-0 opacity-10">
-                      {/* Neural Grid Placeholder */}
-                      <svg width="100%" height="100%">
-                         <defs>
-                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5"/>
-                             </pattern>
-                         </defs>
-                         <rect width="100%" height="100%" fill="url(#grid)" />
-                      </svg>
-                   </div>
-                   
-                   <Globe size={120} className="text-primary/20 group-hover:scale-110 transition-transform duration-700" />
-                   
-                   {/* Mock Location Markers */}
-                   <motion.div 
-                     animate={{ y: [0, -10, 0] }}
-                     transition={{ duration: 3, repeat: Infinity }}
-                     className="absolute top-1/3 left-1/4"
-                   >
-                      <MapPin className="text-primary" size={24} />
-                      <div className="p-2 bg-primary/20 rounded-lg border border-primary/30 text-[8px] font-black absolute top-8 -left-4 whitespace-nowrap shadow-xl">
-                         NEURONAL CENTER
-                      </div>
-                   </motion.div>
-                   
-                   <motion.div 
-                     animate={{ y: [0, 10, 0] }}
-                     transition={{ duration: 4, repeat: Infinity }}
-                     className="absolute bottom-1/4 right-1/3"
-                   >
-                      <MapPin className="text-rose-500" size={24} />
-                      <div className="p-2 bg-rose-500/20 rounded-lg border border-rose-500/30 text-[8px] font-black absolute top-8 -left-2 whitespace-nowrap shadow-xl">
-                         ACTIVE INTERVENTION
-                      </div>
-                   </motion.div>
-                </div>
-
-                <div className="space-y-6">
-                   <div className="p-6 rounded-[1.5rem] bg-emerald-500/10 border border-emerald-500/20">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-2">Network Status</p>
-                      <p className="text-xs font-bold text-emerald-100">All MindfulAI clinical partners are currently synchronized with your biometric telemetry.</p>
-                   </div>
-                   
-                   <button className="w-full py-5 bg-black/5 border border-black/5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-black/10 transition-all flex items-center justify-center gap-3 group">
-                      Sync To Wearable <Zap size={14} className="group-hover:text-primary transition-colors" />
-                   </button>
-                </div>
-             </div>
-          </div>
+          {filtered.length === 0 && (
+            <div style={{ textAlign: 'center', color: 'var(--on-surface-muted)', padding: '2rem', fontSize: '0.875rem' }}>
+              No resources found matching your search.
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
+  );
 }

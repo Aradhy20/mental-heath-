@@ -67,10 +67,21 @@ class ChatbotEngine:
         if not message.strip() and bio_data.get("audio_features"):
             message = "*User is using voice input but no transcription was provided. Please respond warmly, acknowledging their voice and asking them to elaborate or checking on how they sound.*"
 
+        # ── SHORT INPUT FAST PATH — skip ML for greetings/acknowledgments ──────
+        _SHORT_INPUTS = {"hi", "hey", "hello", "ok", "okay", "yes", "no", "thanks",
+                         "thank you", "sure", "bye", "good", "nice", "cool", "great"}
+        _IS_SHORT = len(message.strip()) <= 15 or message.strip().lower() in _SHORT_INPUTS
+
         # ── STEP 1: MULTIMODAL INFERENCE (parallel via thread pool) ───────────
         msg_hash = _hash_input(message)
+        _neutral_probs = np.array([0.1, 0.1, 0.1, 0.1, 0.6])  # mostly neutral
 
-        if msg_hash in _INFERENCE_CACHE:
+        if _IS_SHORT:
+            # Skip all ML inference for greetings — prevents misclassification
+            text_emo_prob, text_risk_prob = _neutral_probs, np.array([0.9, 0.05, 0.05])
+            fused_state  = np.array([0.1, 0.1, 0.1, 0.1, 0.6])
+            fused_emotion = "neutral"
+        elif msg_hash in _INFERENCE_CACHE:
             # Cache HIT — skip all ML inference entirely
             text_emo_prob, text_risk_prob, fused_state, fused_emotion = _INFERENCE_CACHE[msg_hash]
             log.info(f"[Cache] HIT for hash={msg_hash}")
@@ -79,15 +90,18 @@ class ChatbotEngine:
             _default_audio = np.array([0.2] * 5)
             _default_face  = np.array([0.2] * 5)
 
+            async def _noop_audio(): return _default_audio
+            async def _noop_face():  return _default_face
+
             audio_task = (
                 loop.run_in_executor(None, inference_manager.predict_audio, np.array(bio_data["audio_features"], dtype=np.float32))
                 if bio_data.get("audio_features") is not None
-                else asyncio.coroutine(lambda: _default_audio)()
+                else _noop_audio()
             )
             face_task = (
                 loop.run_in_executor(None, inference_manager.predict_face, np.array(bio_data["face_landmarks"], dtype=np.float32))
                 if bio_data.get("face_landmarks") is not None
-                else asyncio.coroutine(lambda: _default_face)()
+                else _noop_face()
             )
             text_task = loop.run_in_executor(None, inference_manager.predict_text, message)
 
@@ -119,9 +133,13 @@ class ChatbotEngine:
             _INFERENCE_CACHE[msg_hash] = (text_emo_prob, text_risk_prob, fused_state, fused_emotion)
 
         # ── STEP 1b: TRAINED EMOTION + RISK MODELS (high-precision override) ────
-        # Run the trained DistilBERT models alongside the fusion engine
-        emotion_result = await loop.run_in_executor(None, emotion_model.predict, message)
-        risk_result    = await loop.run_in_executor(None, risk_model.predict, message)
+        # Short inputs (greetings/acks) skip ML to avoid wrong classifications
+        if _IS_SHORT:
+            emotion_result  = {"emotion": "neutral", "confidence": 1.0, "source": "shortinput"}
+            risk_result     = {"risk_level": "safe", "confidence": 1.0, "is_crisis": False, "source": "shortinput"}
+        else:
+            emotion_result = await loop.run_in_executor(None, emotion_model.predict, message)
+            risk_result    = await loop.run_in_executor(None, risk_model.predict, message)
         trained_emotion = emotion_result["emotion"]
         emotion_conf    = emotion_result["confidence"]
         risk_level_ml   = risk_result["risk_level"]
@@ -209,9 +227,28 @@ class ChatbotEngine:
             })
         )
 
+        # ── RECORD IMPLICIT CONTINUATION ──
+        if db and user_id and user_id != "guest":
+            try:
+                from sqlalchemy import select
+                from models import DBRLFeedback
+                from datetime import datetime
+                q_last = select(DBRLFeedback).where(DBRLFeedback.user_id == user_id).order_by(DBRLFeedback.created_at.desc()).limit(1)
+                res_last = await db.execute(q_last)
+                last_fb = res_last.scalars().first()
+                if last_fb:
+                    # If within 30 minutes, reward the previous style selection (+1 reward)
+                    delta = datetime.utcnow() - last_fb.created_at
+                    if delta.total_seconds() < 1800:
+                        from ai.rl_engine import rl_engine
+                        await rl_engine.record_continuation_feedback(user_id, last_fb.style_selected, db)
+            except Exception as e:
+                log.warning(f"[RL] Error recording continuation: {e}")
+
         # ── STEP 5: BUILD PROMPT (single call to get_system_prompt) ───────────
         from ai.conversation_engine import conversation_engine
         from ai.llm_manager import llm_manager
+        from ai.rl_engine import rl_engine
 
         # ✅ Persistent: call memory.get_history() asynchronously
         chat_history = await memory.get_history(user_id, db)
@@ -232,11 +269,50 @@ class ChatbotEngine:
             message, selected_mode, chat_history, primary_emotion, context_data
         )
 
-        # History as text — use the already-fetched chat_history
+        # History as text — use the already-fetched chat_history (last 5 turns)
         history_text = "\n".join(
-            [f"{m['role'].upper()}: {m['content']}" for m in chat_history[-4:]]
+            [f"{m['role'].upper()}: {m['content']}" for m in chat_history[-5:]]
         ) if chat_history else ""
         full_input = f"{history_text}\nUSER: {message}" if history_text else message
+
+        # Select response style via Thompson Sampling Multi-Armed Bandit
+        style_selected = await rl_engine.select_response_style(user_id, db)
+
+        # Generate candidates from LLM in a single call
+        raw_reply = await llm_manager.generate_response(prompt_pkg["system_prompt"], full_input)
+
+        # Parse tags
+        import re
+        def _parse_tag(text: str, tag: str) -> str:
+            match = re.search(f"<{tag}>(.*?)</{tag}>", text, re.DOTALL | re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+            # Clean fallback
+            clean = re.sub(r"<[^>]+>", "", text)
+            return clean[:300].strip()
+
+        short_reply = _parse_tag(raw_reply, "short")
+        deep_reply = _parse_tag(raw_reply, "deep")
+        coaching_reply = _parse_tag(raw_reply, "coaching")
+
+        replies = {
+            "short": short_reply,
+            "deep": deep_reply,
+            "coaching": coaching_reply
+        }
+        chosen_reply = replies.get(style_selected, deep_reply) or deep_reply
+        if not chosen_reply.strip():
+            chosen_reply = next((r for r in [deep_reply, short_reply, coaching_reply] if r.strip()), "I am here and supporting you.")
+
+        # Create RL feedback record
+        feedback_id = await rl_engine.create_feedback_entry(
+            user_id=user_id,
+            input_text=message,
+            response_text=chosen_reply,
+            style_selected=style_selected,
+            emotion_detected=primary_emotion,
+            db=db
+        )
 
         # ── STEP 6: YIELD METADATA IMMEDIATELY (zero-latency first frame) ─────
         yield {
@@ -248,32 +324,39 @@ class ChatbotEngine:
             "risk_confidence":  risk_conf,
             "mode":             prompt_pkg["mode"],
             "action":           prompt_pkg["suggested_action"],
+            "feedback_id":      feedback_id,
+            "style_selected":   style_selected
         }
 
         # ── STEP 7: STREAM LLM TOKENS ─────────────────────────────────────────
-        full_reply = ""
-        async for token in llm_manager.generate_response_stream(
-            prompt_pkg["system_prompt"], full_input
-        ):
-            full_reply += token
-            yield {"type": "token", "content": token}
+        full_reply = chosen_reply
+        # Yield the response chunk-by-chunk for smooth UI streaming animation
+        chunk_size = 4
+        for i in range(0, len(chosen_reply), chunk_size):
+            chunk = chosen_reply[i:i+chunk_size]
+            yield {"type": "token", "content": chunk}
+            await asyncio.sleep(0.008)
+
 
         # ── STEP 8: POST-PROCESS (persistent storage) ────────────────────────
         await memory.add_entry(user_id, "user",      message, db)
         await memory.add_entry(user_id, "assistant", full_reply.strip(), db)
 
         if db and user_id != "guest":
-            # Update digital twin in background
+            # Update digital twin in background with isolated session to prevent transactional collision
             asyncio.create_task(
-                _update_digital_twin(user_id, message, primary_emotion, db)
+                _update_digital_twin(user_id, message, primary_emotion)
             )
 
 
-async def _update_digital_twin(user_id: str, message: str, emotion: str, db: AsyncSession):
-    """Fire-and-forget digital twin update — does NOT block the stream."""
+async def _update_digital_twin(user_id: str, message: str, emotion: str):
+    """Fire-and-forget digital twin update — does NOT block the stream. Uses isolated session."""
     try:
+        from database import AsyncSessionLocal
         from ai.digital_twin import digital_twin
-        await digital_twin.update_from_interaction(user_id, message, emotion, db)
+        async with AsyncSessionLocal() as fresh_db:
+            await digital_twin.update_from_interaction(user_id, message, emotion, fresh_db)
+            await fresh_db.commit()
     except Exception as e:
         log.error(f"[DigitalTwin] Non-fatal update error: {e}")
 

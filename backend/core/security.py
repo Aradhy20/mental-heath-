@@ -9,7 +9,10 @@ import os
 from dotenv import load_dotenv
 
 env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-load_dotenv(dotenv_path=env_path)
+try:
+    load_dotenv(dotenv_path=env_path)
+except Exception as e:
+    print(f"Warning: core/security.py load_dotenv failed: {e}")
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET", "super-secret-mindfulai-key")
 ALGORITHM = "HS256"

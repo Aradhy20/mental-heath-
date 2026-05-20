@@ -279,3 +279,38 @@ class GameScoreRequest(BaseModel):
     game_name: str
     score: int
     mood_impact: float
+
+
+# ================= REINFORCEMENT LEARNING MODELS =================
+class DBRLFeedback(Base):
+    __tablename__ = "rl_feedback"
+    id = Column(String(50), primary_key=True, index=True)
+    user_id = Column(String(50), index=True, nullable=True)
+    input_text = Column(String(2000))
+    response_text = Column(String(2000))
+    style_selected = Column(String(50)) # short, deep, coaching
+    emotion_detected = Column(String(50))
+    reward = Column(Float, default=0.0)
+    feedback_type = Column(String(20), nullable=True) # like, dislike
+    response_time_ms = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+
+
+class DBRLUserWeights(Base):
+    __tablename__ = "rl_user_weights"
+    user_id = Column(String(50), primary_key=True, index=True)
+    alpha_short = Column(Float, default=1.0)
+    beta_short = Column(Float, default=1.0)
+    alpha_deep = Column(Float, default=1.0)
+    beta_deep = Column(Float, default=1.0)
+    alpha_coaching = Column(Float, default=1.0)
+    beta_coaching = Column(Float, default=1.0)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    updated_at = Column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
+
+
+class ChatFeedbackPayload(BaseModel):
+    feedback_id: str
+    feedback_type: str # like, dislike
+    response_time_ms: Optional[float] = None
+

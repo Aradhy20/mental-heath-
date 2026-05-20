@@ -9,7 +9,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from database import engine, AsyncSessionLocal
 from models import DBUser, MoodLog
-from core.security import get_password_hash
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
 async def seed_db():
     print("[*] Re-seeding database with consistent user IDs...")
@@ -32,7 +36,7 @@ async def seed_db():
         # 2. Add mood logs
         for i in range(15):
             log_date = dt.datetime.utcnow() - dt.timedelta(days=i)
-            score = str(4 if i % 2 == 0 else 5)
+            score = float(4 if i % 2 == 0 else 5)
             mood_log = MoodLog(
                 id=str(uuid.uuid4())[:8],
                 user_id="tanishk2001", # Matches test_user.user_id
@@ -40,8 +44,8 @@ async def seed_db():
                 feelings="Healthy" if i % 2 == 0 else "Balanced",
                 activities="Meditation" if i % 2 == 0 else "Exercise",
                 note=f"Automatic entry for trend testing.",
-                sleep_hours=str(7 + (i % 2)),
-                energy_level=str(8 - (i % 2)),
+                sleep_hours=float(7 + (i % 2)),
+                energy_level=int(8 - (i % 2)),
                 created_at=log_date
             )
             session.add(mood_log)

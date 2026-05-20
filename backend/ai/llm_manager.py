@@ -29,21 +29,26 @@ class LLMManager:
     def _lazy_init(self):
         if self._initialized:
             return
-            
+
+        # Model priority: 70B for quality, 8B as fallback
+        GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+
         if self.groq_key and HAS_GROQ:
-            try:
-                from langchain_groq import ChatGroq
-                self.llm = ChatGroq(
-                    temperature=0.7,
-                    model_name="llama3-8b-8192",
-                    groq_api_key=self.groq_key
-                )
-                log.info("LLM: ChatGroq (Llama 3) ✅")
-                self._initialized = True
-                return
-            except Exception as e:
-                log.error(f"Groq init failed: {e} — falling back to local.")
-                self.groq_key = None
+            for model_name in GROQ_MODELS:
+                try:
+                    from langchain_groq import ChatGroq
+                    self.llm = ChatGroq(
+                        temperature=0.65,
+                        model_name=model_name,
+                        groq_api_key=self.groq_key,
+                        max_tokens=300,
+                    )
+                    log.info(f"LLM: ChatGroq ({model_name}) ✅")
+                    self._initialized = True
+                    return
+                except Exception as e:
+                    log.warning(f"Groq model {model_name} failed: {e} — trying next.")
+            self.groq_key = None  # All Groq models failed
 
         if not self.groq_key or not HAS_GROQ:
             try:

@@ -11,8 +11,15 @@ from typing import List
 from dotenv import load_dotenv
 
 # Load environment variables (API Keys, DB URLs) before other imports
-load_dotenv()
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+try:
+    load_dotenv()
+except Exception as e:
+    print(f"Warning: local load_dotenv failed: {e}")
+
+try:
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+except Exception as e:
+    print(f"Warning: root load_dotenv failed: {e}")
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -151,6 +158,62 @@ async def websocket_analysis(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
+@app.websocket("/ws/face")
+async def websocket_face(websocket: WebSocket):
+    """
+    Real-time face emotion detection stream.
+    Accepts raw binary image data or base64-encoded images.
+    Returns: {"emotion": str, "confidence": float}
+    """
+    await manager.connect(websocket)
+    
+    # Lazy import to avoid server boot slowdown
+    from ai.face_engine import face_engine
+    import base64
+    
+    try:
+        while True:
+            data = await websocket.receive()
+            frame_bytes = None
+            
+            if "bytes" in data:
+                frame_bytes = data["bytes"]
+            elif "text" in data:
+                text_data = data["text"]
+                if text_data.startswith("data:image"):
+                    # Handle raw base64 data url from canvas
+                    try:
+                        _, encoded = text_data.split(",", 1)
+                        frame_bytes = base64.b64decode(encoded)
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        # Handle JSON wrapped image payload
+                        payload = json.loads(text_data)
+                        img_b64 = payload.get("image")
+                        if img_b64:
+                            if "," in img_b64:
+                                img_b64 = img_b64.split(",", 1)[1]
+                            frame_bytes = base64.b64decode(img_b64)
+                    except Exception:
+                        pass
+            
+            if frame_bytes is None:
+                await websocket.send_text(json.dumps({"emotion": "uncertain", "confidence": 0.0, "error": "Invalid format"}))
+                continue
+                
+            # Run our PyTorch CNN pipeline
+            res = face_engine.predict_frame(frame_bytes)
+            await websocket.send_text(json.dumps(res))
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        log.error(f"WebSocket face error: {e}", exc_info=True)
+        manager.disconnect(websocket)
+
+
 # Connect Routers
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(input.router, prefix="/api/v1")
@@ -195,12 +258,28 @@ def check_dependencies():
 @app.on_event("startup")
 async def startup_event():
     log.info("MindfulAI Backend (Low RAM Optimized) Starting...")
-    # Auto-create all SQLite tables from SQLAlchemy models
+    # Auto-create all MySQL tables from SQLAlchemy models
     from database import engine, Base
     import models  # noqa: F401 — ensure all models are registered with Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     log.info("✅ Database tables verified / created successfully")
+
+    # Pre-warm AI models in background (avoids cold-start timeout on first request)
+    import asyncio
+    async def _prewarm_models():
+        try:
+            loop = asyncio.get_running_loop()
+            from ai.emotion_model import emotion_model
+            from ai.risk_model import risk_model
+            from ai.llm_manager import llm_manager
+            await loop.run_in_executor(None, emotion_model.predict, "I feel okay")
+            await loop.run_in_executor(None, risk_model.predict, "I feel okay")
+            llm_manager._lazy_init()
+            log.info("🔥 AI models pre-warmed successfully")
+        except Exception as e:
+            log.warning(f"Model pre-warm warning (non-fatal): {e}")
+    asyncio.create_task(_prewarm_models())
 
 @app.get("/health")
 def health():

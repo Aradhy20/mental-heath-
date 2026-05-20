@@ -1,173 +1,233 @@
-'use client'
+'use client';
+import Link from 'next/link';
+import { useState } from 'react';
+import AnimatedBreather from '@/components/animated-breather';
+import { Shield, Brain, TrendingUp, MapPin, ArrowRight, Zap, Lock } from 'lucide-react';
 
-import React from 'react'
-import { motion } from 'framer-motion'
-import { 
-  ArrowRight, MessageCircle, BarChart3, 
-  Heart, Shield, Zap, 
-  Cpu, Lock, Mic2, Eye
-} from 'lucide-react'
-import Link from 'next/link'
-import { Logo } from '@/components/ui/logo'
-
-const LandingFeatureCard = ({ icon: Icon, title, desc, delay }: any) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.5 }}
-    viewport={{ once: true }}
-    className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all"
-  >
-    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
-      <Icon className="text-primary w-6 h-6" />
-    </div>
-    <h3 className="text-xl font-bold mb-3 tracking-tight">{title}</h3>
-    <p className="text-muted-foreground font-medium text-sm leading-relaxed">{desc}</p>
-  </motion.div>
-)
+const FEATURES = [
+  {
+    icon: Brain,
+    title: 'AI Copilot',
+    desc: 'Multi-mode support — SUPPORT, CBT, COACHING, and CRISIS — powered by LLaMA-3.',
+    color: '#818CF8',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Wellness Index',
+    desc: 'Real-time mood tracking, 30-day trend analysis, and vulnerability prediction.',
+    color: '#34D399',
+  },
+  {
+    icon: MapPin,
+    title: 'Nearby Resources',
+    desc: 'Geolocation-aware map of mental health professionals and clinics near you.',
+    color: '#FBBF24',
+  },
+  {
+    icon: Shield,
+    title: 'Crisis Sentinel',
+    desc: 'Automatic risk detection locks the interface and shows emergency helplines instantly.',
+    color: '#F87171',
+  },
+  {
+    icon: Zap,
+    title: 'Instant Response',
+    desc: 'Server-Sent Events stream AI responses with under 120ms first-token latency.',
+    color: '#818CF8',
+  },
+  {
+    icon: Lock,
+    title: 'Private & Secure',
+    desc: 'Zero-password OTP auth. All data stays on-device until you explicitly sync.',
+    color: '#34D399',
+  },
+];
 
 export default function LandingPage() {
+  const [showBreather, setShowBreather] = useState(false);
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-50 px-10 py-5 flex items-center justify-between">
-        <Logo className="scale-90" />
-        <div className="hidden md:flex items-center gap-10">
-          {['Features', 'How it Works'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="text-sm font-semibold text-gray-600 hover:text-primary transition-colors">
-              {item}
+    <main style={{ minHeight: '100vh' }}>
+      {/* Hero */}
+      <section
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem 1.5rem',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Ambient aura blobs */}
+        <div
+          className="aura-blob"
+          style={{ width: 500, height: 500, background: 'rgba(99,102,241,0.15)', top: -100, left: -100 }}
+        />
+        <div
+          className="aura-blob"
+          style={{ width: 400, height: 400, background: 'rgba(52,211,153,0.1)', bottom: -80, right: -80, animationDelay: '3s' }}
+        />
+
+        {/* Content */}
+        <div className="page-enter" style={{ position: 'relative', zIndex: 1, maxWidth: 700 }}>
+          {/* Pill badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+            <span className="badge badge-primary" style={{ fontSize: '0.8rem', padding: '0.35rem 0.875rem' }}>
+              <Brain size={12} /> AI-Powered Mental Health
+            </span>
+          </div>
+
+          <h1 className="display-lg" style={{ marginBottom: '1.25rem' }}>
+            Your personal{' '}
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #818CF8, #34D399)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              wellness copilot
+            </span>
+            , always with you.
+          </h1>
+
+          <p
+            className="body-lg"
+            style={{ color: 'var(--on-surface-muted)', marginBottom: '2.5rem', maxWidth: 520, margin: '0 auto 2.5rem' }}
+          >
+            Real-time AI support, CBT coaching, mood analytics, and crisis intervention — 
+            all in one beautifully designed, private platform.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '3rem' }}>
+            <Link href="/auth" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>
+              Get Started Free <ArrowRight size={18} />
+            </Link>
+            <button
+              onClick={() => setShowBreather(!showBreather)}
+              className="btn btn-ghost"
+              style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}
+            >
+              Try Breather
+            </button>
+          </div>
+
+          {/* Crisis CTA */}
+          <div style={{ marginBottom: '3rem' }}>
+            <a
+              href="tel:9152987821"
+              className="btn btn-crisis"
+              style={{ fontSize: '0.875rem', padding: '0.625rem 1.5rem' }}
+              id="crisis-cta-988"
+            >
+              🆘 In Crisis? Call iCall — 9152987821
             </a>
-          ))}
-          <Link href="/auth?authMode=login" className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all">
-            Get Started
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="pt-48 pb-20 px-10 max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-6xl font-black tracking-tight text-foreground mb-8 leading-[1.1]">
-              How MindfulAI <br />
-              <span className="text-primary">Empowers You</span>
-            </h1>
-            
-            <div className="space-y-10">
-              {[
-                { 
-                  num: "01", 
-                  title: "Daily Check-in", 
-                  desc: "Spend 2 minutes recording your mood through voice or video." 
-                },
-                { 
-                  num: "02", 
-                  title: "AI Analysis", 
-                  desc: "Our engine analyzes 400+ biometric points to map your emotional state." 
-                },
-                { 
-                  num: "03", 
-                  title: "Guided Support", 
-                  desc: "Receive personalized coping strategies and empathetic chat support." 
-                }
-              ].map((step, i) => (
-                <div key={i} className="flex gap-6">
-                  <span className="text-4xl font-black text-primary/20">{step.num}</span>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">{step.title}</h4>
-                    <p className="text-muted-foreground font-medium">{step.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            className="relative"
-          >
-            <div className="aspect-square bg-primary rounded-[3rem] flex items-center justify-center shadow-2xl shadow-primary/30 relative z-10 overflow-hidden">
-               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-               <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md">
-                 <Heart className="w-24 h-24 text-white fill-white" />
-               </div>
-            </div>
-            <div className="absolute -inset-10 bg-primary/20 blur-[100px] rounded-full -z-10" />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Feature Grid */}
-      <section id="features" className="py-32 px-10 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-10">
-            <LandingFeatureCard 
-              icon={MessageCircle}
-              title="Empathetic AI Chat"
-              desc="Talk to our clinical-grade AI that understands your emotions through voice and text."
-              delay={0}
-            />
-            <LandingFeatureCard 
-              icon={Eye}
-              title="Emotion Tracking"
-              desc="Advanced analysis of your facial expressions and vocal biomarkers for deeper insights."
-              delay={0.1}
-            />
-            <LandingFeatureCard 
-              icon={BarChart3}
-              title="Progress Insights"
-              desc="Weekly reports and data-driven trends to visualize your mental wellness growth."
-              delay={0.2}
-            />
           </div>
+
+          {/* Animated Breather (conditional) */}
+          {showBreather && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '2rem',
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: 'var(--radius-xl)',
+                backdropFilter: 'blur(24px)',
+                marginTop: '1rem',
+                animation: 'page-in 0.4s ease-out both',
+              }}
+            >
+              <p style={{ color: 'var(--on-surface-muted)', fontSize: '0.875rem' }}>
+                Take a moment to breathe. Follow the circle.
+              </p>
+              <AnimatedBreather size={200} />
+            </div>
+          )}
+        </div>
+
+        {/* Scroll indicator */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            color: 'var(--on-surface-muted)',
+            fontSize: '0.75rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.5rem',
+            animation: 'aura-float 2s ease-in-out infinite',
+          }}
+        >
+          <div style={{ width: 1, height: 40, background: 'var(--outline)' }} />
+          scroll
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="py-32 px-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <Shield className="w-16 h-16 text-primary mx-auto mb-8 opacity-20" />
-          <h2 className="text-4xl font-black mb-6 tracking-tight">Clinical Grade Security</h2>
-          <p className="text-xl text-muted-foreground font-medium mb-16 leading-relaxed">
-            Your data is encrypted end-to-end. We prioritize your privacy and emotional safety above all else.
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { icon: Lock, label: "E2E Encrypted" },
-              { icon: Shield, label: "HIPAA Ready" },
-              { icon: Cpu, label: "Local AI" },
-              { icon: Zap, label: "Instant Sync" }
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col items-center gap-3">
-                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                  <item.icon className="w-6 h-6 text-gray-400" />
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{item.label}</span>
+      {/* Features Grid */}
+      <section style={{ padding: '5rem 1.5rem', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <p className="label-md" style={{ color: 'var(--primary)', marginBottom: '0.75rem' }}>Everything you need</p>
+          <h2 className="headline-md">Built for real mental wellness</h2>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '1.25rem',
+          }}
+        >
+          {FEATURES.map((f) => (
+            <div key={f.title} className="glass-card" style={{ padding: '1.75rem' }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: `${f.color}20`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1rem',
+                  border: `1px solid ${f.color}30`,
+                }}
+              >
+                <f.icon size={22} color={f.color} />
               </div>
-            ))}
-          </div>
+              <h3 style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '1.0625rem' }}>{f.title}</h3>
+              <p style={{ color: 'var(--on-surface-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>{f.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Simple Footer */}
-      <footer className="py-20 px-10 border-t border-gray-50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-          <Logo className="scale-75" />
-          <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest">
-            © 2026 MindfulAI Systems — Designed for Resilience.
-          </p>
-          <div className="flex gap-10">
-            <a href="#" className="text-xs font-bold text-gray-400 hover:text-primary transition-colors uppercase tracking-widest">Privacy</a>
-            <a href="#" className="text-xs font-bold text-gray-400 hover:text-primary transition-colors uppercase tracking-widest">Terms</a>
-          </div>
-        </div>
+      {/* Footer */}
+      <footer
+        style={{
+          textAlign: 'center',
+          padding: '3rem 1.5rem',
+          borderTop: '1px solid var(--outline)',
+          color: 'var(--on-surface-muted)',
+          fontSize: '0.875rem',
+        }}
+      >
+        <p style={{ marginBottom: '0.5rem' }}>
+          <Brain size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> MindfulAI © 2026
+        </p>
+        <p>Built with care for mental health. Not a replacement for professional therapy.</p>
       </footer>
-    </div>
-  )
+    </main>
+  );
 }

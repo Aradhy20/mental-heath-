@@ -62,3 +62,28 @@ async def get_digital_twin_profile(
     except Exception as e:
         log.error(f"Digital Twin error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not fetch digital twin profile.")
+
+
+@router.post("/chat/feedback", summary="Submit user feedback (thumbs up/down) for a chatbot response")
+async def chat_feedback(
+    payload: Any, # Use Any or import from models locally
+    db: AsyncSession = Depends(get_db)
+):
+    from models import ChatFeedbackPayload
+    from ai.rl_engine import rl_engine
+    try:
+        # Cast/parse manually or using Pydantic if needed
+        data = ChatFeedbackPayload(**payload) if isinstance(payload, dict) else payload
+        res = await rl_engine.record_explicit_feedback(
+            feedback_id=data.feedback_id,
+            feedback_type=data.feedback_type,
+            response_time_ms=data.response_time_ms,
+            db=db
+        )
+        if res["status"] == "error":
+            raise HTTPException(status_code=400, detail=res["message"])
+        return res
+    except Exception as e:
+        log.error(f"Feedback error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+

@@ -106,13 +106,39 @@ async def analyze_text(req: TextAnalysisRequest, user_id: str = Depends(get_opti
     
     return result
 
-# ── Facial Emotion (Real FaceVisionModel) ────────────────────────────────────────
+# ── Facial Emotion (Real FaceVisionModel & CNN) ────────────────────────────────────────
 @router.post("/face", response_model=AnalysisResult)
 async def analyze_face(req: FaceAnalysisRequest, user_id: str = Depends(get_optional_user)):
     try:
         # Decode base64 image
         header, data = req.image_base64.split(",", 1) if "," in req.image_base64 else (None, req.image_base64)
         image_bytes = base64.b64decode(data)
+        
+        # 1. Primary path: Use our newly trained CNN Emotion model (OpenCV ROI crop + Keras/PyTorch inference)
+        try:
+            from ai.face_service.emotion_cnn import analyze_emotion
+            emotion_label, face_score, confidence = analyze_emotion(image_bytes)
+            
+            # Map CNN emotion classes to client schema labels
+            labels_map = {
+                'Happy': 'happy',
+                'Sad': 'sad',
+                'Fear': 'anxious',
+                'Angry': 'angry',
+                'Neutral': 'neutral',
+                'Surprise': 'happy',  # Surprised displays positive/high arousal valence
+                'Disgust': 'angry'
+            }
+            mapped_label = labels_map.get(emotion_label, 'neutral')
+            
+            return AnalysisResult(
+                label=mapped_label,
+                confidence=float(confidence),
+                score=float(face_score)
+            )
+        except Exception as cnn_err:
+            print(f"Warning: Primary CNN Face analysis failed ({cnn_err}). Falling back to landmark mesh model...")
+            
         nparr = np.frombuffer(image_bytes, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         

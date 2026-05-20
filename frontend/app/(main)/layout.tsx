@@ -1,45 +1,38 @@
-'use client'
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useStore } from '@/lib/store';
+import AppSidebar from '@/components/app-sidebar';
+import CrisisGuard from '@/components/crisis-guard';
 
-import React from 'react'
-import { Box } from '@mui/material'
-import { Sidebar } from "@/components/sidebar"
-import { CrisisGuard } from "@/components/crisis-guard"
+export default function AppShellLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { user } = useStore();
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+  useEffect(() => {
+    if (!user) {
+      router.replace('/auth');
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', margin: '0 auto 1rem' }} />
+          <p style={{ color: 'var(--on-surface-muted)' }}>Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Sidebar />
-      <CrisisGuard riskLevel="LOW" />
-      <Box 
-        component="main" 
-        sx={{ 
-          flexGrow: 1, 
-          height: '100vh', 
-          overflowY: 'auto',
-          p: { xs: 2, md: 4, lg: 6 },
-          position: 'relative'
-        }}
-      >
-        {/* Decorative background element */}
-        <Box sx={{ 
-          position: 'absolute', 
-          top: 0, 
-          right: 0, 
-          width: 600, 
-          height: 600, 
-          bgcolor: 'primary.main', 
-          opacity: 0.05, 
-          filter: 'blur(120px)', 
-          borderRadius: 'full', 
-          pointerEvents: 'none' 
-        }} />
-        
+    <>
+      <CrisisGuard />
+      <AppSidebar />
+      <div className="app-main" style={{ padding: '2rem 1.5rem', paddingBottom: '5rem' }}>
         {children}
-      </Box>
-    </Box>
-  )
+      </div>
+    </>
+  );
 }

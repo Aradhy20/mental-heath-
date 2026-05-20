@@ -80,7 +80,7 @@ class InferenceManager:
         if not self.text_model or not self.tokenizer:
             return None, None
             
-        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=128)
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         
         with torch.no_grad():

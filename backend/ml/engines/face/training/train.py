@@ -18,16 +18,16 @@ os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
 
 # Resolve paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
-ai_models_dir = os.path.dirname(os.path.dirname(current_dir))
-sys.path.append(ai_models_dir)
+backend_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_dir))))
+sys.path.append(backend_root)
 
 try:
     from tensorflow.keras.preprocessing.image import ImageDataGenerator
     from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
-    from face.model.emotion_cnn import EmotionCNN
+    from ai.face_service.emotion_cnn import EmotionCNN
     HAS_TF = True
 except ImportError as e:
-    print(f"TensorFlow/Keras not available: {e}. Cannot train face model.")
+    print(f"Import failed: {e}. Cannot train face model.")
     HAS_TF = False
 
 # Supported emotion classes (FER-2013 format)

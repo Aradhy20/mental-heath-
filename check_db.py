@@ -3,21 +3,21 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import os
 from dotenv import load_dotenv
 
-async def check_postgres():
+async def check_mysql():
     load_dotenv()
-    postgres_url = os.getenv("POSTGRES_URL", "postgresql+asyncpg://postgres:12345678@localhost:5432/mindful_ai")
-    print(f"Attempting to connect to: {postgres_url}")
+    mysql_url = os.getenv("MYSQL_URL", "mysql+aiomysql://root:12345678@127.0.0.1:3306/mindful_ai")
+    print(f"Attempting to connect to: {mysql_url}")
     
-    engine = create_async_engine(postgres_url)
+    engine = create_async_engine(mysql_url)
     try:
         async with engine.connect() as conn:
-            print("✅ PostgreSQL Connection Successful!")
+            print("✅ MySQL Connection Successful!")
             return True
     except Exception as e:
-        print(f"❌ PostgreSQL Connection Failed: {e}")
+        print(f"❌ MySQL Connection Failed: {e}")
         return False
     finally:
         await engine.dispose()
 
 if __name__ == "__main__":
-    asyncio.run(check_postgres())
+    asyncio.run(check_mysql())

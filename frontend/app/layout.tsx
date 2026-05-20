@@ -1,45 +1,34 @@
-import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import './globals.css';
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "MindfulAI | Your Emotional Intelligence Operating System",
-  description: "Multimodal AI therapy, forensics, and guided wellness.",
+export const viewport: Viewport = {
+  themeColor: '#0d0d14',
 };
 
-import { MUIProvider } from "@/components/providers/mui-provider";
-import { ThemeProvider } from "next-themes";
-import { NeuralBackground } from "@/components/ui/neural-background";
+export const metadata: Metadata = {
+  title: 'MindfulAI — Your Mental Wellness Copilot',
+  description:
+    'AI-powered mental health platform with real-time support, CBT tools, mood tracking, and personalized wellness insights. Your safe space to heal and grow.',
+  keywords: ['mental health', 'AI therapy', 'wellness', 'CBT', 'mood tracking'],
+  openGraph: {
+    title: 'MindfulAI — Your Mental Wellness Copilot',
+    description: 'AI-powered mental health support, available 24/7.',
+    type: 'website',
+  },
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${inter.variable} ${outfit.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col font-sans">
-        <NeuralBackground />
-        <ThemeProvider attribute="class" defaultTheme="light">
-          <MUIProvider>
-            {children}
-          </MUIProvider>
-        </ThemeProvider>
-      </body>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
