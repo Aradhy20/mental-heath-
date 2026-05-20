@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "MindfulAI",
+    "slug": "mindfulai-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#09090B"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mindfulai.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MindfulAI uses your camera for real-time facial expression analysis during AI sessions.",
+        "NSMicrophoneUsageDescription": "MindfulAI uses your microphone for voice interaction with the AI therapist.",
+        "NSLocationWhenInUseUsageDescription": "MindfulAI needs your location to recommend nearby gyms, therapists, and meditation centers.",
+        "NSHealthShareUsageDescription": "MindfulAI uses health data (heart rate, sleep) to provide accurate mental health context for the AI Therapist.",
+        "NSHealthUpdateUsageDescription": "MindfulAI securely logs wellness data to your Apple Health ecosystem."
+      }
+    },
+    "android": {
+      "package": "com.mindfulai.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#09090B"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.BODY_SENSORS",
+        "android.permission.ACTIVITY_RECOGNITION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MindfulAI to use your camera for expression analysis."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow MindfulAI to access your microphone for voice chat."
+        }
+      ]
+    ]
+  }
+}
