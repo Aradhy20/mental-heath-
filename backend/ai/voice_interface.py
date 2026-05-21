@@ -81,20 +81,64 @@ class VoiceInterface:
             return "(Voice transcription unavailable offline)"
         
         try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                tmp.write(audio_bytes)
-                tmp_path = tmp.name
+            import numpy as np
+            import io
+            
+            data = None
+            
+            # Try PyAV first for modern browser format compatibility (webm, ogg, etc.)
+            try:
+                import av
+                container = av.open(io.BytesIO(audio_bytes))
+                stream = container.streams.audio[0]
+                # Whisper expects mono float32 audio at 16000Hz
+                resampler = av.AudioResampler(format='flt', layout='mono', rate=16000)
+                
+                all_frames = []
+                for frame in container.decode(stream):
+                    resampled_frames = resampler.resample(frame)
+                    for rf in resampled_frames:
+                        all_frames.append(rf.to_ndarray()[0])
+                        
+                resampled_frames = resampler.resample(None)
+                for rf in resampled_frames:
+                    all_frames.append(rf.to_ndarray()[0])
+                    
+                if all_frames:
+                    data = np.concatenate(all_frames)
+            except Exception as av_err:
+                log.warning(f"PyAV STT decode failed: {av_err}. Falling back to soundfile...")
+
+            # Fallback to soundfile + tempfile if PyAV decoding fails
+            if data is None:
+                import soundfile as sf
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                    tmp.write(audio_bytes)
+                    tmp_path = tmp.name
+                try:
+                    data, samplerate = sf.read(tmp_path)
+                    if len(data.shape) > 1:
+                        data = np.mean(data, axis=1)
+                    # Resample to 16000 if soundfile read wasn't 16000
+                    if samplerate != 16000:
+                        import librosa
+                        data = librosa.resample(data, orig_sr=samplerate, target_sr=16000)
+                finally:
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+
+            if data is None or len(data) == 0:
+                raise ValueError("Empty or un-decodable audio input.")
 
             # Optimized beam_size=1 for faster greedy decoding response time
-            segments, info = self.whisper_model.transcribe(tmp_path, beam_size=1)
+            segments, info = self.whisper_model.transcribe(data, beam_size=1)
             transcript = " ".join([segment.text for segment in segments])
-            
-            os.remove(tmp_path)
             return transcript.strip()
             
         except Exception as e:
             log.error(f"FasterWhisper STT Error: {e}")
             return "(System busy. Transcription failed.)"
+
 
     async def text_to_speech(self, text: str) -> str:
         self._lazy_init_tts()
@@ -134,15 +178,28 @@ class VoiceInterface:
         # 2. Secondary Offline TTS via pyttsx3
         if HAS_PYTTSX3:
             try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                    tmp_path = tmp.name
+                import soundfile as sf
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".aiff") as tmp_aiff:
+                    aiff_path = tmp_aiff.name
                 
-                self.tts_engine.save_to_file(text, tmp_path)
+                self.tts_engine.save_to_file(text, aiff_path)
                 self.tts_engine.runAndWait()
                 
-                with open(tmp_path, "rb") as f:
+                # Convert AIFF to WAV for HTML5 browser compatibility
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_wav:
+                    wav_path = tmp_wav.name
+                
+                data, samplerate = sf.read(aiff_path)
+                sf.write(wav_path, data, samplerate, format='WAV')
+                
+                with open(wav_path, "rb") as f:
                     audio_data = f.read()
-                os.remove(tmp_path)
+                
+                # Cleanup
+                if os.path.exists(aiff_path):
+                    os.remove(aiff_path)
+                if os.path.exists(wav_path):
+                    os.remove(wav_path)
                 
                 b64_str = base64.b64encode(audio_data).decode()
                 return f"data:audio/wav;base64,{b64_str}"

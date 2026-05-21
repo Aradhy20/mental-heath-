@@ -73,24 +73,57 @@ def extract_audio_features(audio_bytes: bytes) -> np.ndarray:
     try:
         import librosa
         import io
-        import soundfile as sf
-        
-        # Load audio from bytes
-        with io.BytesIO(audio_bytes) as audio_file:
-            data, samplerate = sf.read(audio_file)
-            
-            # If stereo, convert to mono
-            if len(data.shape) > 1:
-                data = np.mean(data, axis=1)
-                
-            # Extract MFCCs
-            mfccs = librosa.feature.mfcc(y=data, sr=samplerate, n_mfcc=16)
-            # Average over time
-            mfccs_scaled = np.mean(mfccs.T, axis=0)
-            return np.array(mfccs_scaled, dtype=np.float32)
+        import numpy as np
+
+        data, samplerate = None, None
+
+        # Try decoding with PyAV (handles webm, wav, mp3, ogg, etc. robustly)
+        try:
+            import av
+            container = av.open(io.BytesIO(audio_bytes))
+            stream = container.streams.audio[0]
+            resampler = av.AudioResampler(format='flt', layout='mono', rate=16000)
+
+            all_frames = []
+            for frame in container.decode(stream):
+                resampled_frames = resampler.resample(frame)
+                for rf in resampled_frames:
+                    all_frames.append(rf.to_ndarray()[0])
+
+            resampled_frames = resampler.resample(None)
+            for rf in resampled_frames:
+                all_frames.append(rf.to_ndarray()[0])
+
+            if all_frames:
+                data = np.concatenate(all_frames)
+                samplerate = 16000
+        except Exception as av_err:
+            print(f"PyAV feature extraction decoding failed: {av_err}. Falling back to soundfile...")
+
+        # Fallback to soundfile if PyAV wasn't successful
+        if data is None:
+            import soundfile as sf
+            with io.BytesIO(audio_bytes) as audio_file:
+                data, samplerate = sf.read(audio_file)
+                if len(data.shape) > 1:
+                    data = np.mean(data, axis=1)
+
+        if data is None or len(data) == 0:
+            raise ValueError("Empty audio data decoded")
+
+        # Ensure we have enough samples for librosa mfcc (minimum 2048 samples)
+        if len(data) < 2048:
+            data = np.pad(data, (0, 2048 - len(data)), mode='constant')
+
+        # Extract MFCCs
+        mfccs = librosa.feature.mfcc(y=data, sr=samplerate, n_mfcc=16)
+        # Average over time
+        mfccs_scaled = np.mean(mfccs.T, axis=0)
+        return np.array(mfccs_scaled, dtype=np.float32)
     except Exception as e:
         print(f"Audio feature extraction failed: {e}. Falling back to random noise.")
         return np.random.rand(16).astype(np.float32) * 0.1
+
 
 def extract_face_landmarks(image_bytes: bytes) -> np.ndarray:
     try:

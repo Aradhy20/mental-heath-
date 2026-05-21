@@ -65,8 +65,10 @@ const FaceTrackerSimulator = () => {
   const { theme } = useTheme();
   const [emotion, setEmotion] = useState('Calm');
   const [dots, setDots] = useState<{x: number, y: number}[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Generate static facial landmarks
     const landmarks = [];
     // Oval outline
@@ -116,7 +118,7 @@ const FaceTrackerSimulator = () => {
       {/* Scan overlay grid */}
       <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
         <div className="w-full h-full" style={{
-          backgroundImage: theme === 'light' ? 'radial-gradient(#1e1b4b 1px, transparent 1px)' : 'radial-gradient(#ffffff 1px, transparent 1px)',
+          backgroundImage: mounted && theme === 'light' ? 'radial-gradient(#1e1b4b 1px, transparent 1px)' : 'radial-gradient(#ffffff 1px, transparent 1px)',
           backgroundSize: '16px 16px'
         }} />
       </div>

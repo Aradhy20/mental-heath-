@@ -20,13 +20,18 @@ def train_model():
     print(f"Using device: {device}")
     
     # Parameters
-    epochs = 10
-    batch_size = 32
+    epochs = 5
+    batch_size = 64
     learning_rate = 0.001
     early_stopping_patience = 3
     
     # Load loaders
-    train_loader, val_loader, test_loader = get_dataloaders(batch_size=batch_size)
+    train_loader, val_loader, test_loader = get_dataloaders(
+        batch_size=batch_size,
+        limit_train=2000,
+        limit_val=400,
+        limit_test=400
+    )
     
     # Load Model
     model = FaceCNN(num_classes=5).to(device)

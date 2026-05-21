@@ -20,19 +20,22 @@ LABEL_MAPPING = {
 }
 
 class FER2013Dataset(Dataset):
-    def __init__(self, hf_dataset, augment=False):
+    def __init__(self, hf_dataset, augment=False, limit=None):
         """
         PyTorch wrapper for Hugging Face FER2013 dataset.
         
         Args:
             hf_dataset: The Hugging Face dataset split (train/validation/test).
             augment: Whether to apply NumPy-based data augmentations.
+            limit: Limit the dataset size for quick sandbox training.
         """
         # Filter out labels 1 and 2
         self.samples = [
             item for item in hf_dataset 
             if item['label'] in LABEL_MAPPING
         ]
+        if limit is not None:
+            self.samples = self.samples[:limit]
         self.augment = augment
 
     def __len__(self):
@@ -90,16 +93,16 @@ class FER2013Dataset(Dataset):
 
         return torch.tensor(img, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
 
-def get_dataloaders(batch_size=32):
+def get_dataloaders(batch_size=32, limit_train=None, limit_val=None, limit_test=None):
     """
     Downloads AutumnQiu/fer2013 and returns train, validation, and test PyTorch DataLoaders.
     """
     print("Loading AutumnQiu/fer2013 dataset from Hugging Face...")
     dataset = load_dataset("AutumnQiu/fer2013")
     
-    train_ds = FER2013Dataset(dataset['train'], augment=True)
-    val_ds = FER2013Dataset(dataset['valid'], augment=False)
-    test_ds = FER2013Dataset(dataset['test'], augment=False)
+    train_ds = FER2013Dataset(dataset['train'], augment=True, limit=limit_train)
+    val_ds = FER2013Dataset(dataset['valid'], augment=False, limit=limit_val)
+    test_ds = FER2013Dataset(dataset['test'], augment=False, limit=limit_test)
     
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=0)
