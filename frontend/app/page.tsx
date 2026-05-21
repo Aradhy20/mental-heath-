@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Brain, 
@@ -97,12 +98,12 @@ const FaceTrackerSimulator = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-[330px] rounded-2xl bg-slate-950/90 border border-white/10 overflow-hidden flex flex-col justify-between p-4 shadow-inner">
+    <div className="relative w-full h-[330px] rounded-2xl bg-surface-3/90 border border-outline overflow-hidden flex flex-col justify-between p-4 shadow-inner">
       {/* Top Bar */}
       <div className="flex justify-between items-center z-10">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-[9px] uppercase font-black tracking-widest text-slate-400">Live Camera Stream</span>
+          <span className="text-[9px] uppercase font-black tracking-widest text-on-surface-muted">Live Camera Stream</span>
         </div>
         <div className="px-2 py-0.5 rounded bg-brand-violet/20 border border-brand-purple/20 text-[9px] text-brand-purple font-mono font-bold">
           FPS: 30 · Latency: 12ms
@@ -159,20 +160,20 @@ const FaceTrackerSimulator = () => {
       </div>
 
       {/* Telemetry Display */}
-      <div className="z-10 bg-slate-900/90 backdrop-blur-md rounded-xl p-3 border border-white/5 flex gap-4 items-center justify-between shadow-2xl">
+      <div className="z-10 bg-surface-1/90 backdrop-blur-md rounded-xl p-3 border border-outline flex gap-4 items-center justify-between shadow-2xl">
         <div>
-          <div className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Classification</div>
-          <div className="text-sm font-extrabold text-white flex items-center gap-1.5 mt-0.5">
+          <div className="text-[9px] text-on-surface-muted uppercase font-black tracking-wider">Classification</div>
+          <div className="text-sm font-extrabold text-on-surface flex items-center gap-1.5 mt-0.5">
             <Smile size={15} className="text-brand-teal" />
             <span>{emotion}</span>
           </div>
         </div>
         <div className="flex-1 max-w-[120px] flex flex-col gap-1">
-          <div className="flex justify-between text-[8px] text-slate-400 font-mono">
+          <div className="flex justify-between text-[8px] text-on-surface-muted font-mono">
             <span>Accuracy</span>
             <span>99.2%</span>
           </div>
-          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-surface-3 h-1.5 rounded-full overflow-hidden">
             <motion.div 
               className="bg-brand-teal h-full"
               initial={{ width: "80%" }}
@@ -205,12 +206,12 @@ const VoiceChatSimulator = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-[330px] rounded-2xl bg-slate-950/90 border border-white/10 overflow-hidden flex flex-col justify-between p-4 shadow-inner">
+    <div className="relative w-full h-[330px] rounded-2xl bg-surface-3/90 border border-outline overflow-hidden flex flex-col justify-between p-4 shadow-inner">
       {/* Waveform indicator */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Volume2 size={16} className="text-brand-purple animate-pulse" />
-          <span className="text-[9px] uppercase font-black tracking-widest text-slate-400">Therapist Voice Engine</span>
+          <span className="text-[9px] uppercase font-black tracking-widest text-on-surface-muted">Therapist Voice Engine</span>
         </div>
         <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] text-emerald-400 font-mono font-bold">
           Voice Model: Sarah
@@ -232,11 +233,11 @@ const VoiceChatSimulator = () => {
               <div className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed ${
                 msg.speaker === 'user' 
                   ? 'bg-gradient-to-r from-brand-indigo to-brand-violet text-white rounded-tr-none shadow-[0_4px_12px_rgba(99,102,241,0.25)]' 
-                  : 'bg-white/10 text-[#eeeef5] border border-white/5 rounded-tl-none backdrop-blur-md'
+                  : 'bg-surface-1/70 text-on-surface border border-outline rounded-tl-none backdrop-blur-md'
               }`}>
                 {msg.text}
               </div>
-              <span className="text-[8px] text-slate-500 mt-1 uppercase font-bold tracking-wider px-1">
+              <span className="text-[8px] text-on-surface-muted mt-1 uppercase font-bold tracking-wider px-1">
                 {msg.speaker === 'user' ? 'You' : 'MindfulAI'}
               </span>
             </motion.div>
@@ -245,7 +246,7 @@ const VoiceChatSimulator = () => {
       </div>
 
       {/* Voice wave pulsing bar */}
-      <div className="h-10 border-t border-white/5 flex items-center justify-center gap-1.5 pt-2">
+      <div className="h-10 border-t border-outline flex items-center justify-center gap-1.5 pt-2">
         {[...Array(16)].map((_, i) => (
           <motion.div 
             key={i}
@@ -299,15 +300,15 @@ const BreathingSimulator = () => {
   }, [phase, isPaused]);
 
   return (
-    <div className="relative w-full h-[330px] rounded-2xl bg-slate-950/90 border border-white/10 overflow-hidden flex flex-col justify-between p-4 shadow-inner">
+    <div className="relative w-full h-[330px] rounded-2xl bg-surface-3/90 border border-outline overflow-hidden flex flex-col justify-between p-4 shadow-inner">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Heart size={15} className="text-brand-rose" />
-          <span className="text-[9px] uppercase font-black tracking-widest text-slate-400">Vagus Somatic Guide</span>
+          <span className="text-[9px] uppercase font-black tracking-widest text-on-surface-muted">Vagus Somatic Guide</span>
         </div>
         <button 
           onClick={() => setIsPaused(!isPaused)} 
-          className="p-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white transition active:scale-95"
+          className="p-1.5 rounded-full bg-surface-1/40 border border-outline hover:bg-surface-1/80 text-on-surface transition active:scale-95"
         >
           {isPaused ? <Play size={9} /> : <Pause size={9} />}
         </button>
@@ -336,19 +337,19 @@ const BreathingSimulator = () => {
           transition={{ duration: 4, ease: "easeInOut" }}
         >
           <motion.span 
-            className="text-[10px] font-black uppercase tracking-widest text-slate-200"
+            className="text-[10px] font-black uppercase tracking-widest text-on-surface-muted animate-pulse"
             key={phase}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
           >
             {phase}
           </motion.span>
-          <span className="text-2xl font-black font-mono text-white mt-1.5">
+          <span className="text-2xl font-black font-mono text-on-surface mt-1.5">
             {counter}s
           </span>
         </motion.div>
 
-        <p className="text-[10px] text-slate-400 mt-6 text-center max-w-[200px] leading-relaxed">
+        <p className="text-[10px] text-on-surface-muted mt-6 text-center max-w-[200px] leading-relaxed">
           {phase === 'Inhale' && 'Slowly breathe in, expanding your lungs.'}
           {phase === 'Hold' && 'Hold gently. Release tension in your neck.'}
           {phase === 'Exhale' && 'Release slowly. Let all stressors melt away.'}
@@ -356,9 +357,9 @@ const BreathingSimulator = () => {
       </div>
 
       <div className="flex gap-2 justify-center items-center h-4">
-        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${phase === 'Inhale' ? 'bg-brand-teal scale-125' : 'bg-slate-800'}`} />
-        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${phase === 'Hold' ? 'bg-brand-purple scale-125' : 'bg-slate-800'}`} />
-        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${phase === 'Exhale' ? 'bg-brand-teal scale-125' : 'bg-slate-800'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${phase === 'Inhale' ? 'bg-brand-teal scale-125' : 'bg-surface-1'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${phase === 'Hold' ? 'bg-brand-purple scale-125' : 'bg-surface-1'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${phase === 'Exhale' ? 'bg-brand-teal scale-125' : 'bg-surface-1'}`} />
       </div>
     </div>
   );
@@ -378,7 +379,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="dark bg-[#080816] text-[#eeeef5] min-h-screen font-sans overflow-x-hidden selection:bg-brand-violet/30 selection:text-white relative">
+    <div className="bg-surface text-on-surface transition-colors duration-300 min-h-screen font-sans overflow-x-hidden selection:bg-brand-violet/30 relative">
       
       {/* Floating Space Ambient Glowing Orbs */}
       <div className="absolute top-[-10vw] left-[5vw] w-[45vw] h-[45vw] rounded-full bg-gradient-to-tr from-brand-indigo/15 to-transparent filter blur-[120px] z-0 pointer-events-none" />
@@ -392,7 +393,7 @@ export default function LandingPage() {
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 md:px-12 py-4 flex items-center justify-between border-b ${
           scrolled 
-            ? 'bg-[#080816]/75 backdrop-blur-xl border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.4)]' 
+            ? 'bg-surface/75 backdrop-blur-xl border-outline shadow-md' 
             : 'bg-transparent border-transparent'
         }`}
       >
@@ -401,7 +402,7 @@ export default function LandingPage() {
             <Brain size={18} className="text-white relative z-10 transition-transform duration-300 group-hover:scale-110" />
             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-          <span className="font-black text-xl tracking-tight text-white">
+          <span className="font-black text-xl tracking-tight text-on-surface">
             Mindful<span className="bg-gradient-to-r from-brand-purple to-brand-rose bg-clip-text text-transparent">AI</span>
           </span>
         </div>
@@ -412,7 +413,7 @@ export default function LandingPage() {
             <a 
               key={section}
               href={`#${section}`} 
-              className="text-xs font-black uppercase tracking-widest text-[#8888aa] hover:text-white transition duration-200"
+              className="text-xs font-black uppercase tracking-widest text-on-surface-muted hover:text-on-surface transition duration-200"
             >
               {section}
             </a>
@@ -420,6 +421,7 @@ export default function LandingPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link 
             href="/auth" 
             className="hidden sm:inline-flex items-center justify-center text-xs font-black uppercase tracking-widest px-6 py-3 rounded-full bg-gradient-to-r from-brand-indigo to-brand-purple text-white shadow-btn hover:shadow-[0_8px_28px_rgba(124,58,237,0.65)] hover:-translate-y-0.5 active:translate-y-0 transition duration-200"
@@ -430,7 +432,7 @@ export default function LandingPage() {
           {/* Mobile menu trigger button */}
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg bg-white/5 border border-white/10 md:hidden hover:bg-white/10 transition text-white"
+            className="p-2 rounded-lg bg-surface-2 border border-outline md:hidden hover:bg-surface-3 transition text-on-surface"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -444,14 +446,14 @@ export default function LandingPage() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="fixed top-[70px] left-0 right-0 z-40 bg-[#080816]/95 border-b border-white/[0.08] backdrop-blur-2xl flex flex-col p-6 gap-4 md:hidden shadow-2xl"
+            className="fixed top-[70px] left-0 right-0 z-40 bg-surface-1/95 border-b border-outline backdrop-blur-2xl flex flex-col p-6 gap-4 md:hidden shadow-2xl"
           >
             {['features', 'demo', 'architecture'].map((section) => (
               <a 
                 key={section}
                 href={`#${section}`} 
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-black uppercase tracking-widest py-2 border-b border-white/5 text-[#8888aa] hover:text-white"
+                className="text-xs font-black uppercase tracking-widest py-2 border-b border-outline text-on-surface-muted hover:text-on-surface"
               >
                 {section}
               </a>
@@ -478,27 +480,27 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Hero Visual Mockup Container (Left on Desktop) */}
+          {/* Hero Visual Mockup Container (Right on Desktop) */}
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full lg:col-span-6 relative mt-4 order-2 lg:order-1 flex justify-center"
+            className="w-full lg:col-span-6 relative mt-4 order-2 lg:order-2 flex justify-center"
           >
             {/* Ambient light glow behind mockup */}
             <div className="absolute inset-0 bg-brand-indigo/10 filter blur-3xl rounded-3xl pointer-events-none scale-90 z-[-1]" />
             
             {/* Mock Browser Frame */}
-            <div className="w-full max-w-lg md:max-w-xl relative rounded-2xl border border-white/[0.08] bg-slate-950/80 shadow-[0_32px_96px_rgba(99,102,241,0.25)] backdrop-blur-xl overflow-hidden p-1.5">
+            <div className="w-full max-w-lg md:max-w-xl relative rounded-2xl border border-outline bg-surface-1/80 shadow-[0_32px_96px_rgba(99,102,241,0.15)] backdrop-blur-xl overflow-hidden p-1.5">
               {/* Header dots */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-slate-900/40">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-outline bg-surface-2/40">
                 <div className="flex gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
                   <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
                   <span className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
                 </div>
                 <div className="flex-1 max-w-xs md:max-w-md mx-4">
-                  <div className="bg-[#0b0a1a] rounded-md py-1 text-[10px] text-slate-500 text-center border border-white/5 truncate font-mono">
+                  <div className="bg-surface-3 rounded-md py-1 text-[10px] text-on-surface-muted text-center border border-outline truncate font-mono">
                     https://mindfulai.com/dashboard
                   </div>
                 </div>
@@ -512,7 +514,7 @@ export default function LandingPage() {
                   alt="MindfulAI App Interface" 
                   className="w-full h-full object-cover object-top rounded-b-xl block"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#080816]/70 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-surface/70 via-transparent to-transparent pointer-events-none" />
               </div>
             </div>
 
@@ -520,14 +522,14 @@ export default function LandingPage() {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-              className="hidden sm:flex absolute -left-6 top-[15%] bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] items-center gap-3 max-w-[210px] z-20"
+              className="hidden sm:flex absolute -left-6 top-[15%] bg-surface-1/90 border border-outline backdrop-blur-xl rounded-2xl p-4 shadow-lg items-center gap-3 max-w-[210px] z-20"
             >
               <div className="w-9 h-9 rounded-xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center text-brand-purple animate-pulse">
                 <Mic size={16} />
               </div>
               <div>
-                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Audio Copilot</div>
-                <div className="text-xs font-bold text-white mt-0.5">Sarah (Female)</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-on-surface-muted">Audio Copilot</div>
+                <div className="text-xs font-bold text-on-surface mt-0.5">Sarah (Female)</div>
                 <div className="text-[9px] text-[#34D399] flex items-center gap-1 mt-1 font-mono">
                   <CheckCircle size={10} /> Active Tone
                 </div>
@@ -538,17 +540,17 @@ export default function LandingPage() {
             <motion.div
               animate={{ y: [0, 10, 0] }}
               transition={{ repeat: Infinity, duration: 7, ease: "easeInOut", delay: 0.5 }}
-              className="hidden sm:flex absolute -right-6 top-[45%] bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex-col gap-2 max-w-[190px] z-20"
+              className="hidden sm:flex absolute -right-6 top-[45%] bg-surface-1/90 border border-outline backdrop-blur-xl rounded-2xl p-4 shadow-lg flex-col gap-2 max-w-[190px] z-20"
             >
               <div className="flex items-center justify-between gap-4">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Emotion Radar</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-on-surface-muted">Emotion Radar</span>
                 <span className="text-xs font-black text-brand-teal">85%</span>
               </div>
               <div className="flex items-center gap-2">
                 <Smile size={16} className="text-brand-teal" />
-                <span className="text-xs font-bold text-white">Calm & Focused</span>
+                <span className="text-xs font-bold text-on-surface">Calm & Focused</span>
               </div>
-              <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+              <div className="w-full bg-surface-3 h-1 rounded-full overflow-hidden">
                 <div className="w-[85%] bg-brand-teal h-full" />
               </div>
             </motion.div>
@@ -557,24 +559,24 @@ export default function LandingPage() {
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ repeat: Infinity, duration: 5.5, ease: "easeInOut", delay: 0.2 }}
-              className="hidden sm:flex absolute left-[15%] -bottom-6 bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] items-center gap-3 z-20"
+              className="hidden sm:flex absolute left-[15%] -bottom-6 bg-surface-1/90 border border-outline backdrop-blur-xl rounded-2xl p-4 shadow-lg items-center gap-3 z-20"
             >
               <div className="w-9 h-9 rounded-xl bg-brand-rose/20 border border-brand-rose/30 flex items-center justify-center text-brand-rose">
                 <Heart size={16} />
               </div>
               <div>
-                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">CBT Challenge</div>
-                <div className="text-xs font-bold text-white mt-0.5">5 Day Streak Active</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-on-surface-muted">CBT Challenge</div>
+                <div className="text-xs font-bold text-on-surface mt-0.5">5 Day Streak Active</div>
               </div>
             </motion.div>
           </motion.div>
 
-          {/* Text Container (Right on Desktop) */}
+          {/* Text Container (Left on Desktop) */}
           <motion.div 
             variants={staggerContainer}
             initial="hidden"
             animate="show"
-            className="w-full lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left order-1 lg:order-2"
+            className="w-full lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left order-1 lg:order-1"
           >
             {/* Announcement Badge */}
             <motion.div 
@@ -590,7 +592,7 @@ export default function LandingPage() {
             {/* Heading */}
             <motion.h1 
               variants={fadeInUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-white mb-6"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-on-surface mb-6"
             >
               Empathy-Driven Tech for <br />
               <span className="bg-gradient-to-r from-brand-purple via-brand-rose to-brand-indigo bg-clip-text text-transparent relative">
@@ -601,7 +603,7 @@ export default function LandingPage() {
             {/* Subtitle */}
             <motion.p 
               variants={fadeInUp}
-              className="text-base text-slate-400 max-w-xl leading-relaxed mb-10"
+              className="text-base text-on-surface-muted max-w-xl leading-relaxed mb-10"
             >
               MindfulAI fuses real-time facial analytics, vocal-tone inference, and clinical CBT models to map emotional patterns and guide your path to self-improvement.
             </motion.p>
@@ -619,7 +621,7 @@ export default function LandingPage() {
               </Link>
               <Link 
                 href="/auth" 
-                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white text-sm font-black uppercase tracking-widest transition duration-200"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-surface-2 border border-outline hover:bg-surface-3 text-on-surface text-sm font-black uppercase tracking-widest transition duration-200"
               >
                 Demo Access
               </Link>
@@ -630,59 +632,59 @@ export default function LandingPage() {
       </section>
 
       {/* ── CORE COMPONENT FEATURES GRID ── */}
-      <section id="features" className="py-24 border-t border-white/[0.04] bg-[#090816]/40 relative z-10 px-6">
+      <section id="features" className="py-24 border-t border-outline bg-surface-2/40 relative z-10 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-16">
             <span className="text-[10px] font-black uppercase tracking-widest text-brand-purple">Clinical Strength</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white mt-2 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-on-surface mt-2 mb-4 leading-tight">
               Premium Multimodal Diagnostics
             </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-on-surface-muted text-sm leading-relaxed">
               Four specialized systems designed to monitor wellness indicators, provide therapeutic dialogue, and secure clinical coordinates.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Feature 1 */}
-            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.01] p-6 hover:bg-white/[0.03] hover:border-brand-indigo/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)]">
+            <div className="group rounded-2xl border border-outline bg-surface-1/40 p-6 hover:bg-surface-1/80 hover:border-brand-indigo/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)]">
               <div className="w-11 h-11 rounded-xl bg-brand-indigo/10 flex items-center justify-center mb-5 text-brand-indigo border border-brand-indigo/20 group-hover:scale-105 transition-transform">
                 <Video size={20} />
               </div>
-              <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Webcam Face Analyzer</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-sm font-black text-on-surface uppercase tracking-wider mb-2">Webcam Face Analyzer</h3>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Processes frames via a local convolutional model to predict primary micro-expressions (happy, sad, neutral, angry, surprised).
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.01] p-6 hover:bg-white/[0.03] hover:border-brand-indigo/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)]">
+            <div className="group rounded-2xl border border-outline bg-surface-1/40 p-6 hover:bg-surface-1/80 hover:border-brand-indigo/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)]">
               <div className="w-11 h-11 rounded-xl bg-brand-indigo/10 flex items-center justify-center mb-5 text-brand-indigo border border-brand-indigo/20 group-hover:scale-105 transition-transform">
                 <Mic size={20} />
               </div>
-              <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Voice Speech Engine</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-sm font-black text-on-surface uppercase tracking-wider mb-2">Voice Speech Engine</h3>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Streams vocal signals to process tone shifts. Re-synthesizes spoken therapist audio dynamically with natural inflection.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.01] p-6 hover:bg-white/[0.03] hover:border-brand-indigo/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)]">
+            <div className="group rounded-2xl border border-outline bg-surface-1/40 p-6 hover:bg-surface-1/80 hover:border-brand-indigo/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(99,102,241,0.06)]">
               <div className="w-11 h-11 rounded-xl bg-brand-indigo/10 flex items-center justify-center mb-5 text-brand-indigo border border-brand-indigo/20 group-hover:scale-105 transition-transform">
                 <MessageSquare size={20} />
               </div>
-              <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Parallel Chat Coaches</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-sm font-black text-on-surface uppercase tracking-wider mb-2">Parallel Chat Coaches</h3>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Engage in specialized CBT workflows with distinct agents backed by vector context and persistent memory banks.
               </p>
             </div>
 
             {/* Feature 4 */}
-            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.01] p-6 hover:bg-white/[0.03] hover:border-brand-rose/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(239,68,68,0.04)]">
+            <div className="group rounded-2xl border border-outline bg-surface-1/40 p-6 hover:bg-surface-1/80 hover:border-brand-rose/35 hover:-translate-y-1.5 transition-all duration-300 shadow-xl hover:shadow-[0_20px_40px_rgba(239,68,68,0.04)]">
               <div className="w-11 h-11 rounded-xl bg-brand-rose/10 flex items-center justify-center mb-5 text-brand-rose border border-brand-rose/20 group-hover:scale-105 transition-transform">
                 <ShieldAlert size={20} />
               </div>
-              <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">Crisis Guardrails</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-sm font-black text-on-surface uppercase tracking-wider mb-2">Crisis Guardrails</h3>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Automated risk classification checks for emotional vulnerability indicators and embeds local support coordinates instantly.
               </p>
             </div>
@@ -691,7 +693,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── INTERACTIVE LIVE TOUR ── */}
-      <section id="demo" className="py-24 bg-[#05040f]/90 relative z-10 px-6">
+      <section id="demo" className="py-24 bg-surface-3/30 border-t border-b border-outline relative z-10 px-6">
         <div className="max-w-5xl mx-auto">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -699,7 +701,7 @@ export default function LandingPage() {
             {/* Left side selectors */}
             <div className="lg:col-span-5">
               <span className="text-[10px] font-black uppercase tracking-widest text-brand-purple">Interactive Tour</span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white mt-2 mb-6 leading-tight">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-on-surface mt-2 mb-6 leading-tight">
                 Explore the Core Features
               </h2>
               
@@ -709,17 +711,17 @@ export default function LandingPage() {
                   onClick={() => setActiveTab('biometrics')}
                   className={`text-left p-4 rounded-xl border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group ${
                     activeTab === 'biometrics' 
-                      ? 'bg-white/[0.03] border-brand-indigo/30' 
-                      : 'bg-transparent border-transparent hover:bg-white/[0.01]'
+                      ? 'bg-surface-1 border-outline-strong shadow-sm' 
+                      : 'bg-transparent border-transparent hover:bg-surface-1/40'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 z-10">
-                    <span className={`text-[10px] font-black tracking-wider uppercase ${activeTab === 'biometrics' ? 'text-brand-indigo' : 'text-slate-500'}`}>01.</span>
-                    <h4 className={`text-xs font-black uppercase tracking-widest ${activeTab === 'biometrics' ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] font-black tracking-wider uppercase ${activeTab === 'biometrics' ? 'text-brand-indigo' : 'text-on-surface-muted'}`}>01.</span>
+                    <h4 className={`text-xs font-black uppercase tracking-widest ${activeTab === 'biometrics' ? 'text-on-surface' : 'text-on-surface-muted'}`}>
                       Emotion Profiler
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-500 z-10 pl-6 leading-relaxed">
+                  <p className="text-xs text-on-surface-muted z-10 pl-6 leading-relaxed">
                     Predict facial expressions and audio valence in real-time using neural network grids.
                   </p>
                 </button>
@@ -729,17 +731,17 @@ export default function LandingPage() {
                   onClick={() => setActiveTab('chat')}
                   className={`text-left p-4 rounded-xl border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group ${
                     activeTab === 'chat' 
-                      ? 'bg-white/[0.03] border-brand-indigo/30' 
-                      : 'bg-transparent border-transparent hover:bg-white/[0.01]'
+                      ? 'bg-surface-1 border-outline-strong shadow-sm' 
+                      : 'bg-transparent border-transparent hover:bg-surface-1/40'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 z-10">
-                    <span className={`text-[10px] font-black tracking-wider uppercase ${activeTab === 'chat' ? 'text-brand-indigo' : 'text-slate-500'}`}>02.</span>
-                    <h4 className={`text-xs font-black uppercase tracking-widest ${activeTab === 'chat' ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] font-black tracking-wider uppercase ${activeTab === 'chat' ? 'text-brand-indigo' : 'text-on-surface-muted'}`}>02.</span>
+                    <h4 className={`text-xs font-black uppercase tracking-widest ${activeTab === 'chat' ? 'text-on-surface' : 'text-on-surface-muted'}`}>
                       CBT Speech Coaches
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-500 z-10 pl-6 leading-relaxed">
+                  <p className="text-xs text-on-surface-muted z-10 pl-6 leading-relaxed">
                     Discuss issues with customized cognitive therapists speaking with premium inflection.
                   </p>
                 </button>
@@ -749,17 +751,17 @@ export default function LandingPage() {
                   onClick={() => setActiveTab('insights')}
                   className={`text-left p-4 rounded-xl border transition-all duration-300 flex flex-col gap-1 relative overflow-hidden group ${
                     activeTab === 'insights' 
-                      ? 'bg-white/[0.03] border-brand-indigo/30' 
-                      : 'bg-transparent border-transparent hover:bg-white/[0.01]'
+                      ? 'bg-surface-1 border-outline-strong shadow-sm' 
+                      : 'bg-transparent border-transparent hover:bg-surface-1/40'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 z-10">
-                    <span className={`text-[10px] font-black tracking-wider uppercase ${activeTab === 'insights' ? 'text-brand-indigo' : 'text-slate-500'}`}>03.</span>
-                    <h4 className={`text-xs font-black uppercase tracking-widest ${activeTab === 'insights' ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] font-black tracking-wider uppercase ${activeTab === 'insights' ? 'text-brand-indigo' : 'text-on-surface-muted'}`}>03.</span>
+                    <h4 className={`text-xs font-black uppercase tracking-widest ${activeTab === 'insights' ? 'text-on-surface' : 'text-on-surface-muted'}`}>
                       Vagus Breathing Somatics
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-500 z-10 pl-6 leading-relaxed">
+                  <p className="text-xs text-on-surface-muted z-10 pl-6 leading-relaxed">
                     Access somatic breathing patterns built to trigger acute nervous de-escalation instantly.
                   </p>
                 </button>
@@ -768,7 +770,7 @@ export default function LandingPage() {
 
             {/* Right side live widget preview */}
             <div className="lg:col-span-7">
-              <div className="bg-slate-900/40 border border-white/[0.08] rounded-3xl p-6 md:p-8 backdrop-blur-xl relative overflow-hidden shadow-2xl">
+              <div className="bg-surface-2 border border-outline rounded-3xl p-6 md:p-8 backdrop-blur-xl relative overflow-hidden shadow-2xl">
                 
                 {/* Glow ring */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-brand-indigo/10 filter blur-3xl pointer-events-none z-0" />
@@ -786,7 +788,7 @@ export default function LandingPage() {
                         <FaceTrackerSimulator />
                         <div className="mt-6 flex items-start gap-3">
                           <div className="w-1.5 h-1.5 rounded-full bg-brand-teal mt-1.5" />
-                          <p className="text-xs text-slate-400 leading-relaxed">
+                          <p className="text-xs text-on-surface-muted leading-relaxed">
                             Optical flow metrics extract 478 face coordinate landmarks directly on the client, classifying micro-expressions locally to safeguard biometric data.
                           </p>
                         </div>
@@ -804,7 +806,7 @@ export default function LandingPage() {
                         <VoiceChatSimulator />
                         <div className="mt-6 flex items-start gap-3">
                           <div className="w-1.5 h-1.5 rounded-full bg-brand-purple mt-1.5" />
-                          <p className="text-xs text-slate-400 leading-relaxed">
+                          <p className="text-xs text-on-surface-muted leading-relaxed">
                             Conversational dialogue is mapped via LLMs with vector context retrieval. Text is converted to speech dynamically using ElevenLabs voices with Hindi and English capability.
                           </p>
                         </div>
@@ -822,7 +824,7 @@ export default function LandingPage() {
                         <BreathingSimulator />
                         <div className="mt-6 flex items-start gap-3">
                           <div className="w-1.5 h-1.5 rounded-full bg-brand-teal mt-1.5" />
-                          <p className="text-xs text-slate-400 leading-relaxed">
+                          <p className="text-xs text-on-surface-muted leading-relaxed">
                             Somatic deep breathing exercises guide parasympathetic activation. Toggle play/pause anytime to engage in the 4-4-4 chest expansion rhythm.
                           </p>
                         </div>
@@ -839,48 +841,48 @@ export default function LandingPage() {
       </section>
 
       {/* ── TECHNOLOGY & INTEGRITY SECTION ── */}
-      <section id="architecture" className="py-24 border-t border-white/[0.04] bg-[#090816]/40 relative z-10 px-6">
+      <section id="architecture" className="py-24 border-t border-outline bg-surface-2/40 relative z-10 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-16">
             <span className="text-[10px] font-black uppercase tracking-widest text-brand-purple">System Architecture</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white mt-2 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-on-surface mt-2 mb-4 leading-tight">
               Scientific Integrity & Tech Stack
             </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-on-surface-muted text-sm leading-relaxed">
               Secure identity structures built on performant engines and state-of-the-art weights.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* System 1 */}
-            <div className="rounded-2xl border border-white/[0.05] bg-white/[0.01] p-8 flex flex-col gap-4 shadow-xl">
+            <div className="rounded-2xl border border-outline bg-surface-1/40 p-8 flex flex-col gap-4 shadow-xl">
               <div className="w-10 h-10 rounded-xl bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple">
                 <Layers size={18} />
               </div>
-              <h4 className="text-sm font-black text-white uppercase tracking-wider">Clinical Classification</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h4 className="text-sm font-black text-on-surface uppercase tracking-wider">Clinical Classification</h4>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Runs fine-tuned local classifiers to run sentiment and risk analysis checks on inputs to guarantee rapid emergency identification.
               </p>
             </div>
 
             {/* System 2 */}
-            <div className="rounded-2xl border border-white/[0.05] bg-white/[0.01] p-8 flex flex-col gap-4 shadow-xl">
+            <div className="rounded-2xl border border-outline bg-surface-1/40 p-8 flex flex-col gap-4 shadow-xl">
               <div className="w-10 h-10 rounded-xl bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple">
                 <Database size={18} />
               </div>
-              <h4 className="text-sm font-black text-white uppercase tracking-wider">High Performance Data</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h4 className="text-sm font-black text-on-surface uppercase tracking-wider">High Performance Data</h4>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Saves logs, notes, profiles, and activities inside a secure relational SQL database layer supporting real-time transactions.
               </p>
             </div>
 
             {/* System 3 */}
-            <div className="rounded-2xl border border-white/[0.05] bg-white/[0.01] p-8 flex flex-col gap-4 shadow-xl">
+            <div className="rounded-2xl border border-outline bg-surface-1/40 p-8 flex flex-col gap-4 shadow-xl">
               <div className="w-10 h-10 rounded-xl bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple">
                 <Lock size={18} />
               </div>
-              <h4 className="text-sm font-black text-white uppercase tracking-wider">Strict Privacy Guard</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h4 className="text-sm font-black text-on-surface uppercase tracking-wider">Strict Privacy Guard</h4>
+              <p className="text-xs text-on-surface-muted leading-relaxed">
                 Authenticates via robust cryptographic JSON web tokens. No raw webcam recordings are persisted on external server machines.
               </p>
             </div>
@@ -889,24 +891,24 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-white/[0.04] py-16 bg-[#04030a] relative z-10 px-6">
+      <footer className="border-t border-outline py-16 bg-surface-3/30 relative z-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-8 text-center">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.3)]">
               <Brain size={16} className="text-white" />
             </div>
-            <span className="font-black text-lg tracking-tight text-white">MindfulAI</span>
+            <span className="font-black text-lg tracking-tight text-on-surface">MindfulAI</span>
           </div>
           
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
             {['Privacy Policy', 'Terms of Service', 'Support Desk', 'Clinical Resource Guides'].map((link) => (
-              <a key={link} href="#" className="text-[11px] font-bold tracking-wider uppercase text-slate-500 hover:text-slate-300 transition">
+              <a key={link} href="#" className="text-[11px] font-bold tracking-wider uppercase text-on-surface-muted hover:text-on-surface transition">
                 {link}
               </a>
             ))}
           </div>
 
-          <p className="text-[11px] text-slate-600 max-w-xl leading-relaxed">
+          <p className="text-[11px] text-on-surface-muted max-w-xl leading-relaxed">
             © 2026 MindfulAI Systems. Clinically-informed mental wellness intelligence tools. Not a substitute for professional medical care, diagnosis, or crisis therapy.
           </p>
         </div>
