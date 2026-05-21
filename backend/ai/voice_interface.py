@@ -58,12 +58,18 @@ class VoiceInterface:
             log.info("VoiceInterface: ✅ Whisper Ready")
 
     def _lazy_init_tts(self):
+        global HAS_PYTTSX3
         if self.tts_engine is None and HAS_PYTTSX3:
             log.info("VoiceInterface: Initializing pyttsx3...")
-            import pyttsx3
-            self.tts_engine = pyttsx3.init()
-            self.tts_engine.setProperty('rate', 160)
-            log.info("VoiceInterface: ✅ TTS Ready")
+            try:
+                import pyttsx3
+                self.tts_engine = pyttsx3.init()
+                self.tts_engine.setProperty('rate', 160)
+                log.info("VoiceInterface: ✅ TTS Ready")
+            except (Exception, NameError) as e:
+                log.warning(f"VoiceInterface: pyttsx3 init failed, disabling offline pyttsx3 fallback: {e}")
+                HAS_PYTTSX3 = False
+
 
     async def speech_to_text(self, audio_bytes: bytes) -> str:
         self._lazy_init_whisper()
