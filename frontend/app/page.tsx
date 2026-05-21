@@ -468,7 +468,7 @@ export default function LandingPage() {
       </AnimatePresence>
 
       {/* ── HERO SECTION ── */}
-      <section className="relative pt-32 pb-24 px-6 max-w-7xl mx-auto flex flex-col items-center text-center z-10">
+      <section className="relative pt-32 pb-24 px-6 max-w-7xl mx-auto z-10">
         
         {/* Subtle grid background to overlay details */}
         <div className="absolute inset-0 z-[-1] opacity-[0.04] pointer-events-none" style={{
@@ -476,152 +476,157 @@ export default function LandingPage() {
           backgroundSize: '24px 24px'
         }} />
 
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-          className="max-w-4xl flex flex-col items-center"
-        >
-          {/* Announcement Badge */}
-          <motion.div 
-            variants={fadeInUp}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-indigo/8 border border-brand-purple/20 shadow-[0_0_15px_rgba(99,102,241,0.15)] mb-8"
-          >
-            <Sparkles size={12} className="text-brand-purple animate-pulse" />
-            <span className="text-[10px] font-black text-brand-purple uppercase tracking-widest">
-              Multimodal Emotional AI Suite
-            </span>
-          </motion.div>
-
-          {/* Heading */}
-          <motion.h1 
-            variants={fadeInUp}
-            className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] text-white mb-6"
-          >
-            Empathy-Driven Tech for <br />
-            <span className="bg-gradient-to-r from-brand-purple via-brand-rose to-brand-indigo bg-clip-text text-transparent relative">
-              Mental Resilience
-            </span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p 
-            variants={fadeInUp}
-            className="text-base md:text-lg text-slate-400 max-w-2xl leading-relaxed mb-10"
-          >
-            MindfulAI fuses real-time facial analytics, vocal-tone inference, and clinical CBT models to map emotional patterns and guide your path to self-improvement.
-          </motion.p>
-
-          {/* Action Buttons */}
-          <motion.div 
-            variants={fadeInUp}
-            className="flex flex-col sm:flex-row gap-4 mb-16"
-          >
-            <Link 
-              href="/auth" 
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-brand-indigo to-brand-purple text-white text-sm font-black uppercase tracking-widest shadow-btn hover:shadow-[0_8px_32px_rgba(124,58,237,0.7)] hover:-translate-y-0.5 active:translate-y-0 transition duration-200"
-            >
-              Launch Dashboard <ArrowRight size={16} />
-            </Link>
-            <Link 
-              href="/auth" 
-              className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white text-sm font-black uppercase tracking-widest transition duration-200"
-            >
-              Demo Access
-            </Link>
-          </motion.div>
-        </motion.div>
-
-        {/* Hero Visual Mockup Container */}
-        <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-3xl relative mt-4"
-        >
-          {/* Ambient light glow behind mockup */}
-          <div className="absolute inset-0 bg-brand-indigo/10 filter blur-3xl rounded-3xl pointer-events-none scale-90 z-[-1]" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Mock Browser Frame */}
-          <div className="relative rounded-2xl border border-white/[0.08] bg-slate-950/80 shadow-[0_32px_96px_rgba(99,102,241,0.25)] backdrop-blur-xl overflow-hidden p-1.5">
-            {/* Header dots */}
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-slate-900/40">
-              <div className="flex gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-                <span className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+          {/* Hero Visual Mockup Container (Left on Desktop) */}
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full lg:col-span-6 relative mt-4 order-2 lg:order-1 flex justify-center"
+          >
+            {/* Ambient light glow behind mockup */}
+            <div className="absolute inset-0 bg-brand-indigo/10 filter blur-3xl rounded-3xl pointer-events-none scale-90 z-[-1]" />
+            
+            {/* Mock Browser Frame */}
+            <div className="w-full max-w-lg md:max-w-xl relative rounded-2xl border border-white/[0.08] bg-slate-950/80 shadow-[0_32px_96px_rgba(99,102,241,0.25)] backdrop-blur-xl overflow-hidden p-1.5">
+              {/* Header dots */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-slate-900/40">
+                <div className="flex gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+                </div>
+                <div className="flex-1 max-w-xs md:max-w-md mx-4">
+                  <div className="bg-[#0b0a1a] rounded-md py-1 text-[10px] text-slate-500 text-center border border-white/5 truncate font-mono">
+                    https://mindfulai.com/dashboard
+                  </div>
+                </div>
+                <div className="w-12" />
               </div>
-              <div className="flex-1 max-w-xs md:max-w-md mx-4">
-                <div className="bg-[#0b0a1a] rounded-md py-1 text-[10px] text-slate-500 text-center border border-white/5 truncate font-mono">
-                  https://mindfulai.com/dashboard
+
+              {/* Inner Image */}
+              <div className="relative overflow-hidden rounded-b-xl h-[280px] sm:h-[360px] md:h-[420px]">
+                <img 
+                  src="/mindfulness_hero.png" 
+                  alt="MindfulAI App Interface" 
+                  className="w-full h-full object-cover object-top rounded-b-xl block"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#080816]/70 via-transparent to-transparent pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Floating Widget 1: Vocal Monitor */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+              className="hidden sm:flex absolute -left-6 top-[15%] bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] items-center gap-3 max-w-[210px] z-20"
+            >
+              <div className="w-9 h-9 rounded-xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center text-brand-purple animate-pulse">
+                <Mic size={16} />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Audio Copilot</div>
+                <div className="text-xs font-bold text-white mt-0.5">Sarah (Female)</div>
+                <div className="text-[9px] text-[#34D399] flex items-center gap-1 mt-1 font-mono">
+                  <CheckCircle size={10} /> Active Tone
                 </div>
               </div>
-              <div className="w-12" />
-            </div>
+            </motion.div>
 
-            {/* Inner Image */}
-            <div className="relative overflow-hidden rounded-b-xl h-[320px] sm:h-[400px] md:h-[480px]">
-              <img 
-                src="/mindfulness_hero.png" 
-                alt="MindfulAI App Interface" 
-                className="w-full h-full object-cover object-top rounded-b-xl block"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#080816]/70 via-transparent to-transparent pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Floating Widget 1: Vocal Monitor */}
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-            className="hidden lg:flex absolute -left-12 top-[15%] bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] items-center gap-3 max-w-[210px] z-20"
-          >
-            <div className="w-9 h-9 rounded-xl bg-brand-purple/20 border border-brand-purple/30 flex items-center justify-center text-brand-purple animate-pulse">
-              <Mic size={16} />
-            </div>
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Audio Copilot</div>
-              <div className="text-xs font-bold text-white mt-0.5">Sarah (Female)</div>
-              <div className="text-[9px] text-[#34D399] flex items-center gap-1 mt-1 font-mono">
-                <CheckCircle size={10} /> Active Tone
+            {/* Floating Widget 2: Mood Radar */}
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 7, ease: "easeInOut", delay: 0.5 }}
+              className="hidden sm:flex absolute -right-6 top-[45%] bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex-col gap-2 max-w-[190px] z-20"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Emotion Radar</span>
+                <span className="text-xs font-black text-brand-teal">85%</span>
               </div>
-            </div>
+              <div className="flex items-center gap-2">
+                <Smile size={16} className="text-brand-teal" />
+                <span className="text-xs font-bold text-white">Calm & Focused</span>
+              </div>
+              <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                <div className="w-[85%] bg-brand-teal h-full" />
+              </div>
+            </motion.div>
+
+            {/* Floating Widget 3: Streak Tracker */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 5.5, ease: "easeInOut", delay: 0.2 }}
+              className="hidden sm:flex absolute left-[15%] -bottom-6 bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] items-center gap-3 z-20"
+            >
+              <div className="w-9 h-9 rounded-xl bg-brand-rose/20 border border-brand-rose/30 flex items-center justify-center text-brand-rose">
+                <Heart size={16} />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">CBT Challenge</div>
+                <div className="text-xs font-bold text-white mt-0.5">5 Day Streak Active</div>
+              </div>
+            </motion.div>
           </motion.div>
 
-          {/* Floating Widget 2: Mood Radar */}
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 7, ease: "easeInOut", delay: 0.5 }}
-            className="hidden lg:flex absolute -right-16 top-[45%] bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex-col gap-2 max-w-[190px] z-20"
+          {/* Text Container (Right on Desktop) */}
+          <motion.div 
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="w-full lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left order-1 lg:order-2"
           >
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Emotion Radar</span>
-              <span className="text-xs font-black text-brand-teal">85%</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Smile size={16} className="text-brand-teal" />
-              <span className="text-xs font-bold text-white">Calm & Focused</span>
-            </div>
-            <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-              <div className="w-[85%] bg-brand-teal h-full" />
-            </div>
+            {/* Announcement Badge */}
+            <motion.div 
+              variants={fadeInUp}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-indigo/8 border border-brand-purple/20 shadow-[0_0_15px_rgba(99,102,241,0.15)] mb-8"
+            >
+              <Sparkles size={12} className="text-brand-purple animate-pulse" />
+              <span className="text-[10px] font-black text-brand-purple uppercase tracking-widest">
+                Multimodal Emotional AI Suite
+              </span>
+            </motion.div>
+
+            {/* Heading */}
+            <motion.h1 
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] text-white mb-6"
+            >
+              Empathy-Driven Tech for <br />
+              <span className="bg-gradient-to-r from-brand-purple via-brand-rose to-brand-indigo bg-clip-text text-transparent relative">
+                Mental Resilience
+              </span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p 
+              variants={fadeInUp}
+              className="text-base text-slate-400 max-w-xl leading-relaxed mb-10"
+            >
+              MindfulAI fuses real-time facial analytics, vocal-tone inference, and clinical CBT models to map emotional patterns and guide your path to self-improvement.
+            </motion.p>
+
+            {/* Action Buttons */}
+            <motion.div 
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row gap-4 mb-0"
+            >
+              <Link 
+                href="/auth" 
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-brand-indigo to-brand-purple text-white text-sm font-black uppercase tracking-widest shadow-btn hover:shadow-[0_8px_32px_rgba(124,58,237,0.7)] hover:-translate-y-0.5 active:translate-y-0 transition duration-200"
+              >
+                Launch Dashboard <ArrowRight size={16} />
+              </Link>
+              <Link 
+                href="/auth" 
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white text-sm font-black uppercase tracking-widest transition duration-200"
+              >
+                Demo Access
+              </Link>
+            </motion.div>
           </motion.div>
 
-          {/* Floating Widget 3: Streak Tracker */}
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ repeat: Infinity, duration: 5.5, ease: "easeInOut", delay: 0.2 }}
-            className="hidden lg:flex absolute left-[10%] -bottom-8 bg-slate-950/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.4)] items-center gap-3 z-20"
-          >
-            <div className="w-9 h-9 rounded-xl bg-brand-rose/20 border border-brand-rose/30 flex items-center justify-center text-brand-rose">
-              <Heart size={16} />
-            </div>
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">CBT Challenge</div>
-              <div className="text-xs font-bold text-white mt-0.5">5 Day Streak Active</div>
-            </div>
-          </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ── CORE COMPONENT FEATURES GRID ── */}
