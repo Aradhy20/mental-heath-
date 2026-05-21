@@ -21,7 +21,7 @@ import {
 } from '@mui/icons-material'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthStore } from '@/lib/store'
+import { useStore } from '@/lib/store'
 import { motion } from 'framer-motion'
 
 import { Logo } from "./ui/logo"
@@ -41,7 +41,7 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout } = useAuthStore()
+  const { user, logout } = useStore()
 
   return (
     <Box sx={{ 
@@ -161,15 +161,15 @@ export function Sidebar() {
                   color: 'white'
                 }}
               >
-                {user?.username?.[0]?.toUpperCase()}
+                {(user?.username || user?.name || 'G')[0].toUpperCase()}
               </Avatar>
             </Badge>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.username || 'Guest User'}
+                {user?.username || user?.name || 'Guest User'}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem', fontWeight: 600 }}>
-                {user?.role || 'Premium Access'}
+                {user?.role || user?.tier || 'Premium Access'}
               </Typography>
             </Box>
             <ThemeToggle />

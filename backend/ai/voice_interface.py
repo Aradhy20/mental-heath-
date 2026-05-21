@@ -45,18 +45,21 @@ class VoiceInterface:
             except Exception as e:
                 log.error(f"Failed to init ElevenLabs: {e}")
 
-        log.info("VoiceInterface initialized in LAZY mode.")
+        # Eager load models to optimize response times
+        self._lazy_init_whisper()
+        self._lazy_init_tts()
+        log.info("VoiceInterface initialized and eager-loaded.")
 
     def _lazy_init_whisper(self):
         if self.whisper_model is None and HAS_WHISPER:
-            log.info("VoiceInterface: Lazy-loading Whisper tiny model...")
+            log.info("VoiceInterface: Loading Whisper tiny model...")
             from faster_whisper import WhisperModel
             self.whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
             log.info("VoiceInterface: ✅ Whisper Ready")
 
     def _lazy_init_tts(self):
         if self.tts_engine is None and HAS_PYTTSX3:
-            log.info("VoiceInterface: Lazy-initializing pyttsx3...")
+            log.info("VoiceInterface: Initializing pyttsx3...")
             import pyttsx3
             self.tts_engine = pyttsx3.init()
             self.tts_engine.setProperty('rate', 160)
@@ -76,7 +79,8 @@ class VoiceInterface:
                 tmp.write(audio_bytes)
                 tmp_path = tmp.name
 
-            segments, info = self.whisper_model.transcribe(tmp_path, beam_size=5)
+            # Optimized beam_size=1 for faster greedy decoding response time
+            segments, info = self.whisper_model.transcribe(tmp_path, beam_size=1)
             transcript = " ".join([segment.text for segment in segments])
             
             os.remove(tmp_path)
@@ -95,14 +99,27 @@ class VoiceInterface:
         # 1. Primary: ElevenLabs (High Fidelity)
         if self.eleven_client:
             try:
-                audio_gen = self.eleven_client.generate(
-                    text=text,
-                    voice=os.getenv("ELEVEN_VOICE_ID", "Rachel"),
-                    model="eleven_multilingual_v2"
-                )
+                voice_id = os.getenv("ELEVENLABS_VOICE_ID") or os.getenv("ELEVEN_VOICE_ID") or "Rachel"
+                try:
+                    audio_gen = self.eleven_client.text_to_speech.convert(
+                        voice_id=voice_id,
+                        text=text,
+                        model_id="eleven_multilingual_v2"
+                    )
+                    audio_data = b"".join(list(audio_gen))
+                except Exception as primary_err:
+                    log.error(f"ElevenLabs TTS Primary Voice failed: {primary_err}")
+                    fallback_voice_id = "EXAVITQu4vr4xnSDxMaL" # Sarah (premade)
+                    if voice_id == fallback_voice_id:
+                        raise primary_err
+                    log.info(f"Retrying ElevenLabs TTS with premade female fallback: Sarah ({fallback_voice_id})")
+                    audio_gen = self.eleven_client.text_to_speech.convert(
+                        voice_id=fallback_voice_id,
+                        text=text,
+                        model_id="eleven_multilingual_v2"
+                    )
+                    audio_data = b"".join(list(audio_gen))
                 
-                # audio_gen is a generator/iterator
-                audio_data = b"".join(list(audio_gen))
                 b64_str = base64.b64encode(audio_data).decode()
                 return f"data:audio/mpeg;base64,{b64_str}"
             except Exception as e:
@@ -139,6 +156,78 @@ class VoiceInterface:
             except Exception as e:
                 log.error(f"gTTS Error: {e}")
         
-        return ""
+    async def text_to_speech_advanced(self, text: str, emotion: str) -> str:
+        self._lazy_init_tts()
+        """
+        Advanced TTS that modulates voice settings dynamically depending on the client's emotional state,
+        including stabilizing, calming, and pacing with pauses.
+        """
+        if self.eleven_client:
+            try:
+                # stability: medium-high, clarity: high, style: conversational
+                if emotion == "sad":
+                    # Slow, warm, very supportive
+                    stability_val = 0.85
+                    clarity_val = 0.90
+                    style_val = 0.20
+                    # Add therapeutic pauses for sadness
+                    modified_text = "... " + text.replace(". ", "... ")
+                elif emotion == "anxious":
+                    # Grounding, highly stable
+                    stability_val = 0.90
+                    clarity_val = 0.85
+                    style_val = 0.10
+                    # Add breathing/calming pauses
+                    modified_text = text.replace(". ", "... ")
+                elif emotion == "angry":
+                    # Steady, controlled, lower style variation
+                    stability_val = 0.95
+                    clarity_val = 0.80
+                    style_val = 0.05
+                    modified_text = text
+                else: # neutral / happy
+                    # Warm, conversational, slightly expressive
+                    stability_val = 0.75
+                    clarity_val = 0.85
+                    style_val = 0.25
+                    modified_text = text
+
+                voice_settings = VoiceSettings(
+                    stability=stability_val,
+                    similarity_boost=clarity_val,
+                    style=style_val,
+                    use_speaker_boost=True
+                )
+
+                voice_id = os.getenv("ELEVENLABS_VOICE_ID") or os.getenv("ELEVEN_VOICE_ID") or "Rachel"
+                
+                try:
+                    audio_gen = self.eleven_client.text_to_speech.convert(
+                        voice_id=voice_id,
+                        text=modified_text,
+                        voice_settings=voice_settings,
+                        model_id="eleven_multilingual_v2"
+                    )
+                    audio_data = b"".join(list(audio_gen))
+                except Exception as primary_err:
+                    log.error(f"ElevenLabs Advanced TTS Primary voice failed: {primary_err}. Retrying with premade female fallback: Sarah...")
+                    fallback_voice_id = "EXAVITQu4vr4xnSDxMaL"
+                    if voice_id == fallback_voice_id:
+                        raise primary_err
+                    audio_gen = self.eleven_client.text_to_speech.convert(
+                        voice_id=fallback_voice_id,
+                        text=modified_text,
+                        voice_settings=voice_settings,
+                        model_id="eleven_multilingual_v2"
+                    )
+                    audio_data = b"".join(list(audio_gen))
+                
+                b64_str = base64.b64encode(audio_data).decode()
+                return f"data:audio/mpeg;base64,{b64_str}"
+            except Exception as e:
+                log.error(f"ElevenLabs Advanced TTS Error: {e}")
+
+        # Fallback to standard ElevenLabs or offline TTS
+        return await self.text_to_speech(text)
 
 voice_interface = VoiceInterface()

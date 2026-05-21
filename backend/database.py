@@ -18,7 +18,7 @@ MYSQL_URL = os.getenv("MYSQL_URL", "mysql+aiomysql://root:12345678@127.0.0.1:330
 engine = create_async_engine(
     MYSQL_URL, 
     echo=False, 
-    pool_pre_ping=True,
+    pool_pre_ping=False,
     pool_recycle=3600
 )
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

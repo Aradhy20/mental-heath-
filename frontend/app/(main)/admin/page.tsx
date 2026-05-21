@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Users, 
@@ -12,6 +12,7 @@ import {
   Search,
   Settings
 } from 'lucide-react'
+import { getUsers } from '@/lib/api'
 
 const SYSTEM_STATS = [
   { label: 'Active Users', value: '1,284', trend: '+12%', icon: Users, color: 'text-blue-400' },
@@ -21,6 +22,46 @@ const SYSTEM_STATS = [
 ]
 
 export default function AdminPage() {
+  const [usersList, setUsersList] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    getUsers()
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setUsersList(res.data.map((u: any) => ({
+            name: u.full_name || u.username || 'Anonymous User',
+            email: u.email || 'No email provided',
+            status: u.is_active ? 'Online' : 'Inactive',
+            tier: u.subscription_tier || 'Free',
+            risk: 'Low',
+          })))
+        } else {
+          setUsersList([
+            { name: 'Aradhy Jain', email: 'aradhy@example.com', status: 'Online', tier: 'Ultra', risk: 'Low' },
+            { name: 'John Doe', email: 'john@clinical.ai', status: 'Active', tier: 'Premium', risk: 'Moderate' },
+            { name: 'Jane Smith', email: 'jane@health.org', status: 'Inactive', tier: 'Free', risk: 'Low' },
+            { name: 'User_992', email: 'masked_992@temp.ai', status: 'Online', tier: 'Premium', risk: 'High' }
+          ])
+        }
+      })
+      .catch(() => {
+        setUsersList([
+          { name: 'Aradhy Jain', email: 'aradhy@example.com', status: 'Online', tier: 'Ultra', risk: 'Low' },
+          { name: 'John Doe', email: 'john@clinical.ai', status: 'Active', tier: 'Premium', risk: 'Moderate' },
+          { name: 'Jane Smith', email: 'jane@health.org', status: 'Inactive', tier: 'Free', risk: 'Low' },
+          { name: 'User_992', email: 'masked_992@temp.ai', status: 'Online', tier: 'Premium', risk: 'High' }
+        ])
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filteredUsers = usersList.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
        <header className="flex justify-between items-center">
@@ -64,7 +105,9 @@ export default function AdminPage() {
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input 
-                placeholder="Search UID..." 
+                placeholder="Search name or email..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="bg-black/5 border border-black/5 rounded-xl pl-10 pr-4 py-2 text-xs outline-none"
               />
             </div>
@@ -81,12 +124,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {[
-                  { name: 'Aradhy Jain', email: 'aradhy@example.com', status: 'Online', tier: 'Ultra', risk: 'Low' },
-                  { name: 'John Doe', email: 'john@clinical.ai', status: 'Active', tier: 'Premium', risk: 'Moderate' },
-                  { name: 'Jane Smith', email: 'jane@health.org', status: 'Inactive', tier: 'Free', risk: 'Low' },
-                  { name: 'User_992', email: 'masked_992@temp.ai', status: 'Online', tier: 'Premium', risk: 'High' }
-                ].map((user, i) => (
+                {filteredUsers.map((user, i) => (
                   <tr key={i} className="border-b border-black/5 hover:bg-black/5 transition-colors group">
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">

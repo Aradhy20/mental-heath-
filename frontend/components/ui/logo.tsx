@@ -4,13 +4,14 @@ import { Brain } from 'lucide-react';
 interface LogoProps {
   className?: string;
   withText?: boolean;
+  size?: number;
 }
 
-export const Logo = ({ className = "", withText = true }: LogoProps) => {
+export const Logo = ({ className = "", withText = true, size = 32 }: LogoProps) => {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="bg-primary p-2 rounded-2xl shadow-lg shadow-primary/20 animate-pulse-slow">
-        <Brain className="w-8 h-8 text-white" />
+        <Brain style={{ width: size, height: size }} className="text-white" />
       </div>
       {withText && (
         <div className="flex flex-col">

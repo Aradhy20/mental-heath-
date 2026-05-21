@@ -7,6 +7,10 @@ export interface User {
   email: string;
   tier: string;
   wellnessIndex: number;
+  username?: string;
+  role?: string;
+  avatar?: string;
+  phone?: string;
 }
 
 export interface ChatMessage {
@@ -64,7 +68,12 @@ export const useStore = create<AppState>()(
       token: null,
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
-      logout: () => set({ user: null, token: null, messages: [], lastMood: null }),
+      logout: () => {
+        if (typeof window !== 'undefined') {
+          document.cookie = 'mindful_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        }
+        set({ user: null, token: null, messages: [], lastMood: null });
+      },
 
       messages: [],
       chatMode: 'SUPPORT',

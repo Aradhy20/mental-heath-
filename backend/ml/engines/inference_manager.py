@@ -18,12 +18,17 @@ class InferenceManager:
         # Force CPU if memory is tight, though MPS is usually okay on Mac
         self.device = torch.device('cpu') 
         
-        log.info(f"InferenceManager: Initialized in LAZY mode on {self.device}")
+        log.info(f"InferenceManager: Initialized in EAGER mode on {self.device}")
         
         self.text_model = None
         self.audio_model = None
         self.face_model = None
         self.tokenizer = None
+
+        # Eager load models to optimize response times
+        self._load_text()
+        self._load_audio()
+        self._load_face()
 
     def _load_text(self):
         if self.text_model is not None:

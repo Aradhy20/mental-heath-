@@ -1,9 +1,0 @@
-{
-  "extends": "expo/tsconfig.base.json",
-  "compilerOptions": {
-    "strict": true,
-    "jsx": "react-native",
-    "target": "es2022",
-    "lib": ["es2022"]
-  }
-}

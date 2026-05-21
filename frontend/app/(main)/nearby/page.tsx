@@ -1,30 +1,54 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { MapPin, Phone, ExternalLink, Navigation, Search } from 'lucide-react';
+
+import React, { useEffect, useState } from 'react';
+import { 
+  MapPin, 
+  Phone, 
+  ExternalLink, 
+  Navigation, 
+  Search, 
+  Map as MapIcon, 
+  Compass, 
+  Sparkles,
+  Info
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface Resource {
+  id: number;
+  name: string;
+  type: 'Psychiatrist' | 'Psychologist' | 'Clinic' | 'Helpline';
+  address: string;
+  phone: string;
+  lat: number;
+  lng: number;
+}
 
 const RESOURCE_TYPES = ['All', 'Psychiatrist', 'Psychologist', 'Clinic', 'Helpline'];
 
-const MOCK_RESOURCES = [
-  { id: 1, name: 'NIMHANS', type: 'Clinic', address: 'Hosur Road, Bangalore', phone: '080-46110007', lat: 12.9415, lng: 77.5955 },
-  { id: 2, name: 'iCall Counselling', type: 'Helpline', address: 'Online / Mumbai', phone: '9152987821', lat: 19.0760, lng: 72.8777 },
-  { id: 3, name: 'Vandrevala Foundation', type: 'Helpline', address: 'Pan-India', phone: '1860-2662-345', lat: 18.9667, lng: 72.8333 },
-  { id: 4, name: 'The Mind Research Foundation', type: 'Clinic', address: 'Chennai', phone: '044-24747050', lat: 13.0827, lng: 80.2707 },
-  { id: 5, name: 'LVPrasad Psychiatry', type: 'Psychiatrist', address: 'Hyderabad', phone: '040-30612345', lat: 17.3850, lng: 78.4867 },
+const MOCK_RESOURCES: Resource[] = [
+  { id: 1, name: 'NIMHANS Brain Clinic', type: 'Clinic', address: 'Hosur Road, Lakkasandra, Bangalore', phone: '080-26995000', lat: 12.9415, lng: 77.5955 },
+  { id: 2, name: 'iCall Counselling Service', type: 'Helpline', address: 'Tata Institute of Social Sciences, Mumbai', phone: '9152987821', lat: 19.0443, lng: 72.9238 },
+  { id: 3, name: 'Vandrevala Foundation Helpline', type: 'Helpline', address: 'Pan-India Remote Support, Mumbai', phone: '1860-2662-345', lat: 19.1176, lng: 72.9060 },
+  { id: 4, name: 'The Mind Research Foundation', type: 'Clinic', address: 'Indiranagar, Bangalore', phone: '080-25202050', lat: 12.9719, lng: 77.6412 },
+  { id: 5, name: 'Spandana Psychiatric Hospital', type: 'Psychiatrist', address: 'Rajajinagar, Bangalore', phone: '080-23152199', lat: 12.9982, lng: 77.5530 },
 ];
 
-const TYPE_COLORS: Record<string, string> = {
-  Psychiatrist: '#818CF8',
-  Psychologist:  '#34D399',
-  Clinic:        '#FBBF24',
-  Helpline:      '#F87171',
+const TYPE_COLORS: Record<Resource['type'], string> = {
+  Psychiatrist: '#818CF8', // Indigo
+  Psychologist: '#34D399', // Emerald
+  Clinic: '#FBBF24',       // Amber
+  Helpline: '#F87171',     // Red
 };
 
 export default function NearbyPage() {
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(1);
   const [locating, setLocating] = useState(false);
   const [userCity, setUserCity] = useState('');
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapMode, setMapMode] = useState<'roadmap' | 'satellite'>('roadmap');
 
   const filtered = MOCK_RESOURCES.filter((r) => {
     const matchType = filter === 'All' || r.type === filter;
@@ -33,200 +57,341 @@ export default function NearbyPage() {
     return matchType && matchSearch;
   });
 
+  const getMapUrl = () => {
+    let lat = 12.9415;
+    let lng = 77.5955;
+    
+    if (selected) {
+      const activeRes = MOCK_RESOURCES.find(r => r.id === selected);
+      if (activeRes) {
+        lat = activeRes.lat;
+        lng = activeRes.lng;
+      }
+    } else if (userCoords) {
+      lat = userCoords.lat;
+      lng = userCoords.lng;
+    }
+
+    const tParam = mapMode === 'satellite' ? 'k' : 'm';
+    return `https://maps.google.com/maps?q=${lat},${lng}&t=${tParam}&z=15&output=embed`;
+  };
+
   const handleLocate = () => {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setUserCity('Your location detected ✓');
+        setUserCity('Detected Location ✓');
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setSelected(null);
         setLocating(false);
       },
       () => {
-        setUserCity('Location access denied');
+        setUserCity('Access Denied');
         setLocating(false);
       }
     );
   };
 
   return (
-    <div className="page-enter" style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h1 className="headline-md">Nearby Resources</h1>
-        <p style={{ color: 'var(--on-surface-muted)', marginTop: '0.25rem' }}>
-          Mental health professionals and helplines near you
-        </p>
+    <div style={{ maxWidth: 1440, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', height: 'calc(100vh - 6rem)' }}>
+      
+      {/* Header Banner */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6))',
+        border: '1px solid var(--outline)',
+        padding: '1.25rem 2rem',
+        borderRadius: 'var(--radius-lg)',
+        backdropFilter: 'blur(10px)',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+            <Sparkles size={16} color="var(--primary-dim)" />
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--primary-dim)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Support Finder</span>
+          </div>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--on-surface)', margin: 0 }}>Nearby Wellness Resources</h1>
+          <p style={{ color: 'var(--on-surface-muted)', fontSize: '0.8rem', marginTop: '0.15rem' }}>
+            Instantly locate certified psychiatrists, clinical psychologists, and active crisis helplines.
+          </p>
+        </div>
+        
+        {/* Toggle Map Mode */}
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(9, 13, 22, 0.4)', padding: 4, borderRadius: 10, border: '1px solid var(--outline)' }}>
+          <button 
+            onClick={() => setMapMode('roadmap')}
+            style={{
+              padding: '0.4rem 0.8rem',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              background: mapMode === 'roadmap' ? 'linear-gradient(135deg,#7C3AED,#6366F1)' : 'transparent',
+              color: mapMode === 'roadmap' ? 'white' : 'var(--on-surface-muted)',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Map View
+          </button>
+          <button 
+            onClick={() => setMapMode('satellite')}
+            style={{
+              padding: '0.4rem 0.8rem',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              background: mapMode === 'satellite' ? 'linear-gradient(135deg,#7C3AED,#6366F1)' : 'transparent',
+              color: mapMode === 'satellite' ? 'white' : 'var(--on-surface-muted)',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Satellite View
+          </button>
+        </div>
       </div>
 
-      {/* Controls */}
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.25rem', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--on-surface-muted)' }} />
-          <input
-            id="nearby-search"
-            className="input"
-            placeholder="Search by name or city…"
+      {/* Filter and Search Bar */}
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 280 }}>
+          <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5, color: 'var(--on-surface)' }} />
+          <input 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: '2.25rem' }}
+            placeholder="Search by name, clinic, location..."
+            style={{
+              width: '100%',
+              padding: '0.68rem 1rem 0.68rem 2.5rem',
+              background: '#FFFFFF',
+              border: '1px solid rgba(124,58,237,0.12)',
+              borderRadius: 12,
+              outline: 'none',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: '#1E1B4B'
+            }}
           />
         </div>
+
         <button
           onClick={handleLocate}
-          className="btn btn-tonal"
           disabled={locating}
-          style={{ gap: '0.375rem', fontSize: '0.875rem' }}
+          style={{
+            padding: '0.68rem 1.25rem',
+            background: 'rgba(124,58,237,0.06)',
+            border: '1px solid rgba(124,58,237,0.15)',
+            color: '#7C3AED',
+            borderRadius: 12,
+            fontWeight: 800,
+            fontSize: '0.8rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer'
+          }}
         >
-          <Navigation size={15} />
-          {locating ? 'Locating…' : userCity || 'Use My Location'}
+          <Navigation size={14} className={locating ? 'animate-pulse' : ''} />
+          {locating ? 'Locating...' : userCity || 'Detect My Location'}
         </button>
       </div>
 
-      {/* Type filters */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+      {/* Type Filters */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         {RESOURCE_TYPES.map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}
-            className={`btn ${filter === t ? 'btn-tonal' : 'btn-ghost'}`}
-            style={{ fontSize: '0.8rem', padding: '0.375rem 0.875rem' }}
+            style={{
+              padding: '0.4rem 0.9rem',
+              background: filter === t ? 'rgba(124,58,237,0.08)' : '#FFFFFF',
+              border: filter === t ? '1px solid #7C3AED' : '1px solid rgba(124,58,237,0.08)',
+              color: filter === t ? '#7C3AED' : 'var(--on-surface-muted)',
+              borderRadius: 20,
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              transition: 'all 0.2s'
+            }}
           >
-            {t !== 'All' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: TYPE_COLORS[t], display: 'inline-block', marginRight: 4 }} />}
+            {t !== 'All' && (
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: TYPE_COLORS[t as Resource['type']] }} />
+            )}
             {t}
           </button>
         ))}
       </div>
 
-      {/* Main layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.25rem' }}>
-        {/* Map placeholder */}
-        <div
-          className="glass-card"
-          style={{
-            height: 480,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            background: 'var(--surface-2)',
-          }}
-        >
-          {/* OSM embed placeholder — in production connect to leaflet/mapbox */}
+      {/* Main Map Panel Grid Layout */}
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gap: '1.5rem' }} className="lg:grid-cols-[1fr_360px]">
+        
+        {/* Interactive Google Map Canvas */}
+        <div style={{
+          position: 'relative',
+          borderRadius: 20,
+          overflow: 'hidden',
+          border: '1px solid rgba(124,58,237,0.12)',
+          boxShadow: '0 8px 32px rgba(124,58,237,0.04)',
+          background: '#090d16',
+          height: '100%'
+        }}>
+          <iframe 
+            width="100%" 
+            height="100%" 
+            title="Google Maps Location"
+            src={getMapUrl()}
+            style={{ border: 'none' }}
+            allowFullScreen
+            loading="lazy"
+          />
+
+          {/* Quick Info Overlay */}
           <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(52,211,153,0.05))',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem',
+            position: 'absolute',
+            bottom: '1rem',
+            left: '1rem',
+            background: 'rgba(9, 13, 22, 0.85)',
+            backdropFilter: 'blur(8px)',
+            padding: '0.6rem 1rem',
+            borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: 'white',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            pointerEvents: 'none',
+            zIndex: 10
           }}>
-            {/* Grid overlay to simulate map */}
-            <svg width="100%" height="100%" style={{ position: 'absolute', opacity: 0.08 }}>
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--primary)" strokeWidth="0.5" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-
-            {/* Pins */}
-            {filtered.map((r, i) => (
-              <button
-                key={r.id}
-                onClick={() => setSelected(r.id)}
-                title={r.name}
-                style={{
-                  position: 'absolute',
-                  left: `${20 + (i * 14) % 60}%`,
-                  top: `${25 + (i * 18) % 50}%`,
-                  background: selected === r.id ? 'var(--primary)' : TYPE_COLORS[r.type] ?? '#818CF8',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 'var(--radius-full)',
-                  padding: '0.25rem 0.625rem',
-                  fontSize: '0.7rem',
-                  fontFamily: 'inherit',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: `0 2px 12px ${TYPE_COLORS[r.type] ?? '#818CF8'}60`,
-                  transform: selected === r.id ? 'scale(1.15)' : 'scale(1)',
-                  transition: 'all var(--transition)',
-                  zIndex: selected === r.id ? 10 : 1,
-                  display: 'flex', alignItems: 'center', gap: '0.25rem',
-                }}
-              >
-                <MapPin size={11} /> {r.name.split(' ')[0]}
-              </button>
-            ))}
-
-            <div style={{ textAlign: 'center', zIndex: 1, pointerEvents: 'none' }}>
-              <MapPin size={32} color="var(--primary)" style={{ marginBottom: '0.5rem', opacity: 0.4 }} />
-              <p style={{ color: 'var(--on-surface-muted)', fontSize: '0.875rem' }}>
-                Interactive map · {filtered.length} resources
-              </p>
-            </div>
+            <Info size={12} color="var(--primary-dim)" />
+            Real-Time Google Maps Integration Active
           </div>
         </div>
 
-        {/* Resource list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: 480, overflowY: 'auto' }}>
-          {filtered.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => setSelected(selected === r.id ? null : r.id)}
-              style={{
-                background: selected === r.id ? 'var(--primary-container)' : 'var(--glass-bg)',
-                backdropFilter: 'blur(24px)',
-                border: `1px solid ${selected === r.id ? 'var(--outline-strong)' : 'var(--glass-border)'}`,
-                borderRadius: 'var(--radius-md)',
-                padding: '1rem',
-                textAlign: 'left',
-                cursor: 'pointer',
-                transition: 'all var(--transition)',
-                fontFamily: 'inherit',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem' }}>
+        {/* Resources Scroll List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', height: '100%', paddingRight: '0.25rem' }}>
+          {filtered.map((r) => {
+            const isSelected = selected === r.id;
+            return (
+              <motion.div
+                key={r.id}
+                onClick={() => setSelected(isSelected ? null : r.id)}
+                whileHover={{ x: 2 }}
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: 16,
+                  cursor: 'pointer',
+                  border: isSelected ? '1px solid #7C3AED' : '1px solid rgba(124,58,237,0.06)',
+                  background: isSelected ? 'rgba(124,58,237,0.04)' : '#FFFFFF',
+                  boxShadow: isSelected ? '0 8px 24px rgba(124,58,237,0.02)' : '0 2px 8px rgba(0,0,0,0.005)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.875rem'
+                }}
+              >
                 <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: `${TYPE_COLORS[r.type] ?? '#818CF8'}20`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: `${TYPE_COLORS[r.type]}15`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}>
-                  <MapPin size={16} color={TYPE_COLORS[r.type] ?? '#818CF8'} />
+                  <MapPin size={18} color={TYPE_COLORS[r.type]} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.25rem' }}>{r.name}</div>
-                  <div style={{ color: 'var(--on-surface-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-                    <span className="badge" style={{ background: `${TYPE_COLORS[r.type]}18`, color: TYPE_COLORS[r.type], fontSize: '0.65rem', marginRight: '0.25rem' }}>{r.type}</span>
-                    {r.address}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
+                    <h4 style={{ fontWeight: 800, fontSize: '0.9rem', color: '#1E1B4B', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.name}
+                    </h4>
                   </div>
-                  {selected === r.id && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      <a href={`tel:${r.phone}`} className="btn btn-tonal" style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}>
-                        <Phone size={12} /> {r.phone}
-                      </a>
-                      <a
-                        href={`https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lng}#map=15/${r.lat}/${r.lng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: 8 }}>
+                    <span style={{ padding: '0.15rem 0.4rem', background: `${TYPE_COLORS[r.type]}12`, color: TYPE_COLORS[r.type], fontSize: '0.625rem', fontWeight: 800, textTransform: 'uppercase', borderRadius: 6 }}>
+                      {r.type}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--on-surface-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {r.address}
+                    </span>
+                  </div>
+
+                  <AnimatePresence>
+                    {isSelected && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        style={{ overflow: 'hidden', display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}
                       >
-                        <ExternalLink size={12} /> Directions
-                      </a>
-                    </div>
-                  )}
+                        <a 
+                          href={`tel:${r.phone}`}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            padding: '0.45rem 0.8rem',
+                            background: 'rgba(16,185,129,0.08)',
+                            border: '1px solid rgba(16,185,129,0.15)',
+                            color: '#10B981',
+                            borderRadius: 10,
+                            fontWeight: 800,
+                            fontSize: '0.7rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <Phone size={12} /> Call Service
+                        </a>
+                        <a 
+                          href={`https://maps.google.com/?q=${r.lat},${r.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            padding: '0.45rem 0.8rem',
+                            background: 'rgba(124,58,237,0.08)',
+                            border: '1px solid rgba(124,58,237,0.15)',
+                            color: '#7C3AED',
+                            borderRadius: 10,
+                            fontWeight: 800,
+                            fontSize: '0.7rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <ExternalLink size={12} /> Directions
+                        </a>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
-            </button>
-          ))}
+              </motion.div>
+            );
+          })}
 
           {filtered.length === 0 && (
-            <div style={{ textAlign: 'center', color: 'var(--on-surface-muted)', padding: '2rem', fontSize: '0.875rem' }}>
-              No resources found matching your search.
+            <div style={{ textAlign: 'center', color: 'var(--on-surface-muted)', padding: '3rem 1rem', fontSize: '0.85rem' }}>
+              No clinics or helplines found matching your search.
             </div>
           )}
         </div>
+
       </div>
+
     </div>
   );
 }

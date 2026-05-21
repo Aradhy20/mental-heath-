@@ -13,6 +13,8 @@ from ai.memory import memory
 from database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from ai.chatbot_engine import chatbot_engine
+from ai.voice_interface import voice_interface
+from ai.llm_manager import llm_manager
 
 router = APIRouter(prefix="/input", tags=["Multi-Modal Input"])
 
@@ -54,6 +56,17 @@ class FusionResponse(BaseModel):
     reply: str
     reasoning: str
     component_scores: Dict[str, Any]
+
+class VoiceAssistantRequest(BaseModel):
+    audio_base64: Optional[str] = None
+    text: Optional[str] = None
+    image_base64: Optional[str] = None
+
+class VoiceAssistantResponse(BaseModel):
+    emotion: str
+    confidence: float
+    reply: str
+    audio_base64: Optional[str] = None
 
 # --- Processing Helpers ---
 def extract_audio_features(audio_bytes: bytes) -> np.ndarray:
@@ -257,4 +270,114 @@ async def process_fusion(req: FusionInputRequest, db: AsyncSession = Depends(get
             "behavior": {labels[i]: float(behav_probs[i]) for i in range(5)},
             "fused": {labels[i]: float(final_probs[i]) for i in range(5)}
         }
+    )
+
+@router.post("/voice-assistant", response_model=VoiceAssistantResponse)
+async def voice_assistant_endpoint(
+    req: VoiceAssistantRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_optional_user)
+):
+    labels = ["happy", "sad", "anxious", "angry", "neutral"]
+    
+    # 1. Transcribe audio if provided
+    transcribed_text = req.text or ""
+    audio_bytes = None
+    if req.audio_base64:
+        try:
+            header, data = req.audio_base64.split(",", 1) if "," in req.audio_base64 else (None, req.audio_base64)
+            audio_bytes = base64.b64decode(data)
+            transcribed_text = await voice_interface.speech_to_text(audio_bytes)
+            if transcribed_text == "(Voice transcription unavailable offline)":
+                transcribed_text = "I'm feeling a bit overwhelmed."
+        except Exception as e:
+            print(f"Assistant audio decode/transcribe error: {e}")
+            
+    if not transcribed_text:
+        transcribed_text = "Hello."
+
+    # 2. Emotion estimation from multimodally fused inputs
+    text_probs = np.array([0.2]*5)
+    ep, rp = inference_manager.predict_text(transcribed_text)
+    if ep is not None:
+        text_probs = ep
+        
+    voice_probs = np.array([0.2]*5)
+    if audio_bytes is not None:
+        try:
+            features = extract_audio_features(audio_bytes)
+            vp = inference_manager.predict_audio(features)
+            if vp is not None:
+                voice_probs = vp
+        except Exception as e:
+            print(f"Assistant audio prediction error: {e}")
+            
+    face_probs = np.array([0.2]*5)
+    if req.image_base64:
+        try:
+            header, data = req.image_base64.split(",", 1) if "," in req.image_base64 else (None, req.image_base64)
+            image_bytes = base64.b64decode(data)
+            landmarks = extract_face_landmarks(image_bytes)
+            fp = inference_manager.predict_face(landmarks)
+            if fp is not None:
+                face_probs = fp
+        except Exception as e:
+            print(f"Assistant face prediction error: {e}")
+            
+    # Simple weights: text 0.5, voice 0.3, face 0.2
+    w_t, w_v, w_f = 0.5, 0.3, 0.2
+    if not req.image_base64:
+        w_f = 0
+    if not req.audio_base64:
+        w_v = 0
+        
+    total_w = w_t + w_v + w_f
+    if total_w == 0:
+        w_t, total_w = 1.0, 1.0
+        
+    final_probs = (w_t * text_probs + w_v * voice_probs + w_f * face_probs) / total_w
+    final_idx = int(np.argmax(final_probs))
+    final_emotion = labels[final_idx]
+    confidence_score = float(np.max(final_probs))
+
+    # 3. Chat history for context
+    chat_history = await memory.get_history(user_id, db)
+    history_summary = " | ".join([m["content"] for m in chat_history[-3:]]) if chat_history else "No recent context."
+    
+    # 4. Prompt injection for persona guidelines:
+    # Speaks like a senior doctor + caring friend
+    # Soft & slow tone
+    # Max 2-3 sentences, warm acknowledgment, reassurance, support, optional gentle question
+    system_prompt = (
+        "You are MindfulAI, speaking as an experienced senior medical doctor, gentle counselor, and caring supportive friend. "
+        "The user feels {emotion}. Speak in a soft, slow, calm, and grounding tone. "
+        "Do NOT lecture, use technical jargon, or over-explain. "
+        "You MUST respond in maximum 2 to 3 sentences. "
+        "Strictly follow this structure:\n"
+        "1. Warmly acknowledge their feeling/emotion.\n"
+        "2. Show reassurance and support.\n"
+        "3. Ask a gentle, open question (optional).\n"
+        "Context of recent chat: {history_summary}."
+    ).format(emotion=final_emotion, history_summary=history_summary[:300])
+
+    reply = await llm_manager.generate_response(system_prompt, transcribed_text)
+
+    # Clean punctuation just in case the LLM returned too much or raw formatting
+    # Max 3 sentences check
+    sentences = [s.strip() for s in reply.split(".") if s.strip()]
+    if len(sentences) > 3:
+        reply = ". ".join(sentences[:3]) + "."
+
+    # 5. Record to memory
+    await memory.add_entry(user_id, "user", transcribed_text, db)
+    await memory.add_entry(user_id, "assistant", reply, db)
+
+    # 6. Advanced TTS modulated by emotion
+    tts_audio_base64 = await voice_interface.text_to_speech_advanced(reply, final_emotion)
+
+    return VoiceAssistantResponse(
+        emotion=final_emotion,
+        confidence=confidence_score,
+        reply=reply,
+        audio_base64=tts_audio_base64
     )

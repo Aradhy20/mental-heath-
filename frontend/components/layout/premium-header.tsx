@@ -23,13 +23,11 @@ export function PremiumHeader() {
       <Container maxWidth="xl">
         <Stack 
           direction="row" 
-          justifyContent="space-between" 
-          alignItems="center" 
-          sx={{ height: 72 }}
+          sx={{ height: 72, justifyContent: 'space-between', alignItems: 'center' }}
         >
           {/* Logo Section */}
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
               <Box 
                 sx={{ 
                   width: 40, 

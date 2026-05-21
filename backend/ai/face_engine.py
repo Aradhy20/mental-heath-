@@ -82,12 +82,12 @@ class FaceEmotionEngine:
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
-        # Detect faces
+        # Detect faces with high sensitivity settings for low-light/turned heads
         faces = self.face_cascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30)
+            scaleFactor=1.05,
+            minNeighbors=3,
+            minSize=(20, 20)
         )
 
         if len(faces) == 0:
@@ -134,8 +134,8 @@ class FaceEmotionEngine:
         matching_confidences = [conf for idx, conf in self.prediction_queue if idx == final_idx]
         avg_confidence = sum(matching_confidences) / len(matching_confidences)
 
-        # Confidence Filtering
-        if avg_confidence < 0.5:
+        # Confidence Filtering: lower threshold to 0.3 for robust live feedback
+        if avg_confidence < 0.3:
             return {"emotion": "uncertain", "confidence": float(round(avg_confidence, 4))}
 
         return {

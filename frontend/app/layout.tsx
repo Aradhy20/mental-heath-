@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { ThemeProvider } from 'next-themes';
+import { MUIProvider } from '@/components/providers/mui-provider';
 
 export const viewport: Viewport = {
-  themeColor: '#0d0d14',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)',  color: '#0d0d14' },
+    { media: '(prefers-color-scheme: light)', color: '#F9FAFB' },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -24,11 +29,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <MUIProvider>{children}</MUIProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
+

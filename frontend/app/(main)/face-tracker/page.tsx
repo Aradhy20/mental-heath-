@@ -89,6 +89,8 @@ export default function FaceTrackerPage() {
   });
   const [logs, setLogs] = useState<Array<{ time: string, emotion: string, conf: number }>>([]);
 
+  const [isSimulated, setIsSimulated] = useState(false);
+
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -98,7 +100,13 @@ export default function FaceTrackerPage() {
 
   // API base URL computation (supporting localhost:8000 and custom ports)
   const getWsUrl = () => {
-    const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    let rawUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!rawUrl && typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
+      const hostname = window.location.hostname;
+      rawUrl = `${protocol}://${hostname}:8000`;
+    }
+    rawUrl = rawUrl || 'http://localhost:8000';
     return rawUrl.replace(/^http/, 'ws') + '/ws/face';
   };
 
@@ -115,12 +123,47 @@ export default function FaceTrackerPage() {
     return () => clearInterval(timer);
   }, [isTracking, sessionStartTime]);
 
-  const startTracking = async () => {
+  const startSimulator = () => {
+    setIsTracking(true);
+    setIsSimulated(true);
+    setCameraError(null);
+    setSessionStartTime(Date.now());
+    setCurrentEmotion('neutral');
+    setConfidence(0.85);
+    
+    // Simulate periodic emotional updates
+    const emotionsList: EmotionKey[] = ['happy', 'sad', 'angry', 'surprised', 'neutral'];
+    
+    intervalRef.current = setInterval(() => {
+      const randomEmotion = emotionsList[Math.floor(Math.random() * emotionsList.length)];
+      const randomConfidence = Number((0.65 + Math.random() * 0.32).toFixed(4));
+      
+      setCurrentEmotion(randomEmotion);
+      setConfidence(randomConfidence);
+
+      setEmotionCounts(prev => ({
+        ...prev,
+        [randomEmotion]: prev[randomEmotion] + 1
+      }));
+
+      setLogs(prev => {
+        const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        return [{ time: nowStr, emotion: EMOTIONS[randomEmotion].label, conf: randomConfidence }, ...prev].slice(0, 5);
+      });
+    }, 1500);
+  };
+
+  const startTracking = async (forceSimulator: boolean = false) => {
     setCameraError(null);
     setCurrentEmotion('uncertain');
     setConfidence(0.0);
     setLogs([]);
     setEmotionCounts({ happy: 0, sad: 0, angry: 0, surprised: 0, neutral: 0 });
+
+    if (forceSimulator) {
+      startSimulator();
+      return;
+    }
 
     try {
       // 1. Get webcam access
@@ -141,6 +184,7 @@ export default function FaceTrackerPage() {
 
       socket.onopen = () => {
         setIsTracking(true);
+        setIsSimulated(false);
         setSessionStartTime(Date.now());
         
         // Start periodic frame captures (10 FPS = 100ms interval)
@@ -193,8 +237,10 @@ export default function FaceTrackerPage() {
 
       socket.onerror = (e) => {
         console.error("WebSocket error:", e);
-        setCameraError("Unable to establish low-latency model server connection.");
+        setCameraError("Unable to establish low-latency model server connection. Launching simulator fallback...");
+        // Auto fallback to simulator on socket error
         stopTracking();
+        startSimulator();
       };
 
       socket.onclose = () => {
@@ -205,8 +251,8 @@ export default function FaceTrackerPage() {
       console.error("Camera access failed:", err);
       setCameraError(
         err.name === 'NotAllowedError' 
-          ? "Camera permission denied. Please grant camera access in settings." 
-          : "Webcam initialization failed. Check connection."
+          ? "Camera permission denied. Please grant camera access or try simulator mode." 
+          : "Webcam initialization failed. Launching simulator fallback..."
       );
       stopTracking();
     }
@@ -214,6 +260,7 @@ export default function FaceTrackerPage() {
 
   const stopTracking = () => {
     setIsTracking(false);
+    setIsSimulated(false);
     setSessionStartTime(null);
     setCurrentEmotion('uncertain');
     setConfidence(0.0);
@@ -227,7 +274,7 @@ export default function FaceTrackerPage() {
       videoRef.current.srcObject = null;
     }
 
-    // Clear capture interval
+    // Clear capture / simulation interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -412,13 +459,88 @@ export default function FaceTrackerPage() {
                   <p style={{ color: 'var(--error)', fontSize: '0.875rem', maxWidth: '360px', margin: '0 auto 1.5rem' }}>
                     {cameraError}
                   </p>
-                  <button 
-                    onClick={startTracking}
-                    className="btn btn-primary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                  >
-                    <RefreshCw size={16} /> Try Again
-                  </button>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    <button 
+                      onClick={() => startTracking(false)}
+                      className="btn btn-primary"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                      <RefreshCw size={16} /> Try Again
+                    </button>
+                    <button 
+                      onClick={() => startTracking(true)}
+                      className="btn"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(99, 102, 241, 0.1)', border: '1px solid var(--primary-dim)', color: 'var(--primary-dim)' }}
+                    >
+                      <Sparkles size={16} /> Try Sandbox Mode
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Simulated scan placeholder when in simulator mode */}
+              {isTracking && isSimulated && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.15), rgba(9, 13, 22, 0.95))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1,
+                  overflow: 'hidden'
+                }}>
+                  {/* Glowing grid */}
+                  <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]" />
+                  
+                  {/* Moving scanning line */}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      height: '2px',
+                      background: 'linear-gradient(90deg, transparent, var(--primary-dim), transparent)',
+                      boxShadow: '0 0 10px var(--primary-dim)',
+                      animation: 'scanUpDown 3s infinite ease-in-out'
+                    }}
+                  />
+
+                  {/* Wireframe target mesh */}
+                  <div style={{
+                    width: 140,
+                    height: 140,
+                    borderRadius: '50%',
+                    border: '1px dashed rgba(99,102,241,0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    animation: 'spinSlow 20s linear infinite',
+                    position: 'relative'
+                  }}>
+                    <div style={{
+                      width: 100,
+                      height: 100,
+                      borderRadius: '50%',
+                      border: '1.5px solid var(--primary-dim)',
+                      opacity: 0.6
+                    }} />
+                    {/* Reticle marks */}
+                    <div style={{ position: 'absolute', top: 0, width: 6, height: 12, backgroundColor: 'var(--primary-dim)', borderRadius: 2 }} />
+                    <div style={{ position: 'absolute', bottom: 0, width: 6, height: 12, backgroundColor: 'var(--primary-dim)', borderRadius: 2 }} />
+                    <div style={{ position: 'absolute', left: 0, height: 6, width: 12, backgroundColor: 'var(--primary-dim)', borderRadius: 2 }} />
+                    <div style={{ position: 'absolute', right: 0, height: 6, width: 12, backgroundColor: 'var(--primary-dim)', borderRadius: 2 }} />
+                  </div>
+                  
+                  <div style={{ marginTop: '1.5rem', zIndex: 2 }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--primary-dim)', animation: 'pulse 1.5s infinite' }}>
+                      Simulated Sandbox Mode
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--on-surface-muted)', marginTop: 4 }}>
+                      Facial metrics synthetically generated
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -464,7 +586,7 @@ export default function FaceTrackerPage() {
                     border: `1px solid ${currentTheme.color}`
                   }}>
                     <CurrentIcon size={12} />
-                    {Math.round(confidence * 100)}% Conf
+                    {isSimulated ? 'Simulated' : `${Math.round(confidence * 100)}% Conf`}
                   </div>
                 </div>
               )}
@@ -473,24 +595,46 @@ export default function FaceTrackerPage() {
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', width: '100%', maxWidth: '400px' }}>
               {!isTracking ? (
-                <button
-                  onClick={startTracking}
-                  className="btn btn-primary"
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.75rem',
-                    padding: '0.75rem',
-                    fontSize: '0.9375rem',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <Play size={18} fill="currentColor" /> Start Analyzer
-                </button>
+                <>
+                  <button
+                    onClick={() => startTracking(false)}
+                    className="btn btn-primary"
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem',
+                      fontSize: '0.9375rem',
+                      fontWeight: 600,
+                      boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Camera size={18} /> Webcam Mode
+                  </button>
+                  <button
+                    onClick={() => startTracking(true)}
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem',
+                      fontSize: '0.9375rem',
+                      fontWeight: 600,
+                      backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                      border: '1px solid var(--primary-dim)',
+                      color: 'var(--primary-dim)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Sparkles size={18} /> Sandbox Mode
+                  </button>
+                </>
               ) : (
                 <button
                   onClick={stopTracking}
@@ -709,6 +853,14 @@ export default function FaceTrackerPage() {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        @keyframes scanUpDown {
+          0%, 100% { top: 5%; }
+          50% { top: 90%; }
+        }
+        @keyframes spinSlow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
