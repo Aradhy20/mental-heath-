@@ -408,6 +408,7 @@ export default function AICompanion({ mode = 'floating', size = 80 }: AICompanio
               cy="53" 
               r="5" 
               fill="#F472B6" 
+              initial={{ opacity: 0.2 }}
               animate={{ opacity: emotion === 'happy' ? 0.65 : 0.2 }}
             />
             <motion.circle 
@@ -415,6 +416,7 @@ export default function AICompanion({ mode = 'floating', size = 80 }: AICompanio
               cy="53" 
               r="5" 
               fill="#F472B6" 
+              initial={{ opacity: 0.2 }}
               animate={{ opacity: emotion === 'happy' ? 0.65 : 0.2 }}
             />
 
@@ -432,6 +434,8 @@ export default function AICompanion({ mode = 'floating', size = 80 }: AICompanio
                   cx="33" 
                   cy="46" 
                   rx="3.5" 
+                  ry="3.5"
+                  initial={{ ry: 3.5 }}
                   animate={{ ry: [3.5, 0.1, 3.5] }}
                   transition={{ repeat: Infinity, duration: 3.5, repeatDelay: 3 }}
                   fill="#1E1B4B" 
@@ -440,6 +444,8 @@ export default function AICompanion({ mode = 'floating', size = 80 }: AICompanio
                   cx="67" 
                   cy="46" 
                   rx="3.5" 
+                  ry="3.5"
+                  initial={{ ry: 3.5 }}
                   animate={{ ry: [3.5, 0.1, 3.5] }}
                   transition={{ repeat: Infinity, duration: 3.5, repeatDelay: 3 }}
                   fill="#1E1B4B" 

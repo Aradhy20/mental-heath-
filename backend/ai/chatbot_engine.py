@@ -70,7 +70,7 @@ class ChatbotEngine:
         # ── SHORT INPUT FAST PATH — skip ML for greetings/acknowledgments ──────
         _SHORT_INPUTS = {"hi", "hey", "hello", "ok", "okay", "yes", "no", "thanks",
                          "thank you", "sure", "bye", "good", "nice", "cool", "great"}
-        _IS_SHORT = len(message.strip()) <= 15 or message.strip().lower() in _SHORT_INPUTS
+        _IS_SHORT = len(message.strip()) <= 4 or message.strip().lower() in _SHORT_INPUTS
 
         # ── STEP 1: MULTIMODAL INFERENCE (parallel via thread pool) ───────────
         msg_hash = _hash_input(message)
@@ -283,13 +283,22 @@ class ChatbotEngine:
 
         # Parse tags
         import re
+        def _limit_sentences(text: str, max_sentences: int = 2) -> str:
+            text_clean = re.sub(r'\s+', ' ', text).strip()
+            # Split by period, exclamation mark, or question mark followed by space or end
+            sentences = re.split(r'(?<=[.!?])\s+', text_clean)
+            sentences = [s.strip() for s in sentences if s.strip()]
+            if not sentences:
+                return ""
+            return " ".join(sentences[:max_sentences])
+
         def _parse_tag(text: str, tag: str) -> str:
             match = re.search(f"<{tag}>(.*?)</{tag}>", text, re.DOTALL | re.IGNORECASE)
             if match:
-                return match.group(1).strip()
+                return _limit_sentences(match.group(1).strip())
             # Clean fallback
             clean = re.sub(r"<[^>]+>", "", text)
-            return clean[:300].strip()
+            return _limit_sentences(clean)
 
         short_reply = _parse_tag(raw_reply, "short")
         deep_reply = _parse_tag(raw_reply, "deep")
@@ -303,6 +312,7 @@ class ChatbotEngine:
         chosen_reply = replies.get(style_selected, deep_reply) or deep_reply
         if not chosen_reply.strip():
             chosen_reply = next((r for r in [deep_reply, short_reply, coaching_reply] if r.strip()), "I am here and supporting you.")
+        chosen_reply = chosen_reply.strip().strip('"').strip("'").strip()
 
         # Create RL feedback record
         feedback_id = await rl_engine.create_feedback_entry(

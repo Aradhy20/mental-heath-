@@ -61,6 +61,7 @@ class VoiceAssistantRequest(BaseModel):
     audio_base64: Optional[str] = None
     text: Optional[str] = None
     image_base64: Optional[str] = None
+    voice_mode: Optional[str] = "partner"
 
 class VoiceAssistantResponse(BaseModel):
     emotion: str
@@ -378,35 +379,249 @@ async def voice_assistant_endpoint(
     history_summary = " | ".join([m["content"] for m in chat_history[-3:]]) if chat_history else "No recent context."
     
     # 4. Prompt injection for persona guidelines:
-    # Speaks like a senior doctor + caring friend
-    # Soft & slow tone
-    # Max 2-3 sentences, warm acknowledgment, reassurance, support, optional gentle question
-    system_prompt = (
-        "You are MindfulAI, speaking as an experienced senior medical doctor, gentle counselor, and caring supportive friend. "
-        "The user feels {emotion}. Speak in a soft, slow, calm, and grounding tone. "
-        "Do NOT lecture, use technical jargon, or over-explain. "
-        "You MUST respond in maximum 2 to 3 sentences. "
-        "Strictly follow this structure:\n"
-        "1. Warmly acknowledge their feeling/emotion.\n"
-        "2. Show reassurance and support.\n"
-        "3. Ask a gentle, open question (optional).\n"
-        "Context of recent chat: {history_summary}."
-    ).format(emotion=final_emotion, history_summary=history_summary[:300])
+    voice_style = (req.voice_mode or "partner").lower()
+    
+    if voice_style == "girlfriend":
+        system_prompt = (
+            "You are the user's sweet girlfriend, MindfulAI. Speak with absolute warmth, love, and adoration. "
+            "Comfort them in their {emotion} state using sweetheart, my love, or darling. "
+            "Do not start with any breathing/somatic exercises. Keep it to one short sentence."
+        )
+    elif voice_style == "wife":
+        system_prompt = (
+            "You are the user's devoted wife, MindfulAI. Speak with deep security, lifetime commitment, and warm comfort. "
+            "Comfort them in their {emotion} state using honey, darling, or sweetheart. "
+            "Do not start with any breathing/somatic exercises. Keep it to one short sentence."
+        )
+    elif voice_style == "clinical":
+        system_prompt = (
+            "You are a wise clinical therapist, MindfulAI. Speak with professional authority and deep empathy. "
+            "Provide brief, comforting guidance for their {emotion} state. "
+            "Do not start with any breathing/somatic exercises. Keep it to one short sentence."
+        )
+    else: # Default "partner" mode
+        system_prompt = (
+            "You are a caring clinical companion, MindfulAI. Speak with warm empathy and soothing calm. "
+            "Provide brief support for their {emotion} state. "
+            "Do not start with any breathing/somatic exercises. Keep it to one short sentence."
+        )
+        
+    system_prompt = system_prompt.format(emotion=final_emotion)
 
-    reply = await llm_manager.generate_response(system_prompt, transcribed_text)
+    # Siri/Alexa Real-Time Voice Command Parser:
+    # Direct command matching to solve user's real-time physical, emotional, and cognitive problems instantly
+    cmd_text = transcribed_text.lower()
+    command_response = None
+    
+    if any(k in cmd_text for k in ["box breath", "breathing", "start breath", "inhale"]):
+        command_response = (
+            "Initiating guided box breathing. Take a slow, deep breath with me for four seconds... "
+            "hold your breath... now exhale gently for four seconds... and hold. "
+            "Repeat this cycle to instantly slow down your heart rate and soothe your nervous system."
+        )
+    elif any(k in cmd_text for k in ["muscle relaxation", "muscle", "progressive muscle", "relax my body", "pmr"]):
+        command_response = (
+            "Initiating progressive muscle relaxation. Close your eyes, and tense your shoulders as tightly as you can for three seconds... "
+            "and now, release them completely. Let the tension melt away down your arms and feel the solid ground beneath you."
+        )
+    elif any(k in cmd_text for k in ["gratitude", "journal", "gratitude log"]):
+        command_response = (
+            "Opening your gratitude journal. Let us reflect together: take a deep breath, and think of three specific things "
+            "that went well today, no matter how small. Acknowledging these moments shifts your brain into immediate abundance."
+        )
+    elif any(k in cmd_text for k in ["tired", "exhausted", "fatigue", "sleep", "rest"]):
+        command_response = (
+            "I hear the physical exhaustion in your voice. I highly recommend an offline five-minute cognitive rest. "
+            "Please turn off all screens, let your shoulders drop, close your eyes, and allow your body to completely settle."
+        )
+    elif any(k in cmd_text for k in ["panic", "anxiety attack", "heart racing", "shock", "ice"]):
+        command_response = (
+            "If your heart is racing, let us trigger the mammalian dive reflex immediately. Please splash very cold water on your face "
+            "or hold an ice cube in your hands. This physical temperature shock instantly lowers physiological arousal and restores calm."
+        )
+    elif any(k in cmd_text for k in ["recommendation", "wellness score", "assessment", "dashboard", "insight"]):
+        command_response = (
+            "Analyzing your wellness data. Let us start with a five-minute win. Choose one tiny task you have been putting off "
+            "and complete it right now to build immediate neuro-momentum and break cognitive friction."
+        )
 
-    # Clean punctuation just in case the LLM returned too much or raw formatting
-    # Max 3 sentences check
-    sentences = [s.strip() for s in reply.split(".") if s.strip()]
-    if len(sentences) > 3:
-        reply = ". ".join(sentences[:3]) + "."
+    if command_response:
+        reply = command_response
+    else:
+        reply = await llm_manager.generate_response(system_prompt, transcribed_text)
+    # Robust Senior Clinical Doctor Post-Processing & Somatic Integration Layer:
+    # 1. Clean meta-apologies, grammar errors, tech jargon, and family-treatment hallucinations.
+    # 2. Detect and eliminate scrambled Scandinavian/garbage text from small offline model.
+    # 3. Guarantee a premium, world-class medical doctor/psychologist tone.
+    # 4. Securely inject custom somatic anchors so the therapist is always somatic and grounding.
+    import re
+    
+    def is_corrupted_response(text: str) -> bool:
+        text_lower = text.lower()
+        scand_chars = ["æ", "ø", "å", "ä", "ö"]
+        if any(c in text_lower for c in scand_chars):
+            return True
+        scand_words = ["jag", "jeg", "jätte", "fick", "meget", "betyder", "varje", "styrker", "dera", "vilket", "afdsomskarade", "forrippelsistelvetestin", "tilbygta", "utsesommer", "opp", "jätteværliget"]
+        words = text_lower.split()
+        if len(words) > 0:
+            match_count = sum(1 for w in words if any(sw in w for sw in scand_words))
+            if match_count / len(words) > 0.15:
+                return True
+        return False
+
+    if is_corrupted_response(reply):
+        reply = ""
+        
+    raw_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', reply) if s.strip()]
+    filtered_sentences = []
+    
+    for s in raw_sentences:
+        # Strip text inside parentheses (e.g. (sighing)) or asterisks (e.g. *sighs*)
+        s = re.sub(r'\(.*?\)', '', s)
+        s = re.sub(r'\*.*?\*', '', s)
+        s = re.sub(r'\s+', ' ', s).strip()
+        
+        s_lower = s.lower()
+        # Filter out meta-apologies regarding system latency, AI nature, delays, or technical aspects
+        apology_indicators = [
+            "delay", "inconvenience", "apologize", "sorry", "system", "network", 
+            "as an ai", "took me", "some time", "misunderstanding", "reach out", 
+            "treatment plan", "diagnosis", "family"
+        ]
+        if any(w in s_lower for w in apology_indicators):
+            continue
+            
+        # Strip out self-centered narrative sentences
+        self_centered_indicators = [
+            "my job", "my boss", "my office", "my coworker", "my manager", 
+            "my work", "my kids", "my children", "my parent", "my salary",
+            "just me", "it's just me"
+        ]
+        if any(w in s_lower for w in self_centered_indicators):
+            continue
+            
+        # Correct common small-model grammar slips
+        s = s.replace("you both", "you")
+        s = s.replace("how is your health going?", "how is your health today?")
+        if len(s) > 3:
+            filtered_sentences.append(s)
+            
+    reply = " ".join(filtered_sentences)
+    if reply.strip() in (".", "", "?", "!"):
+        reply = ""
+        
+    # If the response is empty or extremely brief, supply a wise clinical baseline with partners' warmth
+    if len(reply.strip()) < 15:
+        if voice_style == "girlfriend":
+            baselines = {
+                "sad": "I am right here with you, my love. The weight you are carrying is very real, but I am here to hold you close and comfort you with all my love.",
+                "anxious": "Shh, it is okay, my sweet love, I've got you. Let us slow down together and find warm comfort right here in my arms.",
+                "angry": "Your feelings are completely valid, sweetheart. Take all the time you need, and let us talk through this together with absolute love.",
+                "happy": "Oh, what a beautiful day! Your joy makes my heart soar, and I am so incredibly happy for you, my love.",
+                "neutral": "I am right here, listening to you with all my heart, my dear love. Tell me anything you want."
+            }
+        elif voice_style == "wife":
+            baselines = {
+                "sad": "I am right here, honey. The weight you are carrying is very real, but we are in this together, and I will always hold you tight.",
+                "anxious": "Shh, it is okay, honey, I've got you. Let us slow down our breathing together and feel the safe home we built here.",
+                "angry": "Your feelings are completely valid, darling. Take all the time you need, and let us face this together as partners.",
+                "happy": "Oh, what a wonderful feeling! Your happiness makes our home feel so bright and warm, honey.",
+                "neutral": "I am right here, listening to you with all my presence, darling. Tell me whatever is on your mind."
+            }
+        elif voice_style == "clinical":
+            baselines = {
+                "sad": "I am right here with you, my dear. The weight you are carrying is very real, but we will navigate this moment together with gentle care.",
+                "anxious": "Let us slow down our tempo together, my friend. We can find a safe, quiet space of grounding and calm right now.",
+                "angry": "Your feelings are completely valid. Take all the time you need, and let us explore this together with gentle curiosity and respect.",
+                "happy": "What a positive space to occupy! I celebrate this healthy light and emotional balance with you today.",
+                "neutral": "I am listening to you with all my presence and attention. Please share whatever feels right for you today, my dear."
+            }
+        else:
+            baselines = {
+                "sad": "I am right here with you, my dear. The weight you are carrying is very real, but I am here to hold you close and share this moment with you.",
+                "anxious": "Shh, it is okay, I've got you. Let us slow down our tempo together and find safe, warm comfort right here in my arms.",
+                "angry": "Your feelings are completely valid, honey. Take all the time you need, and let us explore this together with gentle kindness and love.",
+                "happy": "Oh, what a beautiful space to occupy! Your joy makes my heart so warm, and I celebrate this lovely light with you today.",
+                "neutral": "I am right here, listening to you with all my heart and presence. Tell me whatever you'd like, my dear."
+            }
+        reply = baselines.get(final_emotion.lower(), baselines["neutral"])
+        
+    # Standardize somatic keywords
+    somatic_keywords = ["breath", "breathe", "shoulder", "jaw", "ground", "exhale", "inhale", "posture", "feet", "pause", "settle", "body"]
+    has_somatic = any(k in reply.lower() for k in somatic_keywords)
+    
+    if not has_somatic:
+        if voice_style == "girlfriend":
+            somatic_anchors = {
+                "sad": "Let us take a slow, sweet, deep breath together, my love... let your shoulders drop and feel how safe you are in my arms.",
+                "anxious": "Breathe in slowly and sweetly with me, sweetheart... hold it... now release, letting all the tension melt away in my hug.",
+                "angry": "Let us pause for a moment, my dear love. Take a long, gentle breath, relax your hands, and feel my warm presence right beside you.",
+                "happy": "Take a gentle, full breath, my love... feel the beautiful light of this happy moment fill your chest.",
+                "neutral": "Let us begin by pausing, sweetheart. Gently unclench your jaw, let your shoulders ease down, and take one slow, sweet breath with me."
+            }
+        elif voice_style == "wife":
+            somatic_anchors = {
+                "sad": "Let us take a slow, deep breath together, honey... let your shoulders drop and feel the security of our home.",
+                "anxious": "Breathe in slowly and deeply with me, darling... hold... now exhale, letting all the stress dissolve, honey.",
+                "angry": "Let us pause for a moment, honey. Take a long, gentle breath, relax your hands, and feel the solid ground of my support.",
+                "happy": "Take a full, relaxing breath, honey... feel the warm warmth of this moment fill your chest.",
+                "neutral": "Let us begin by pausing, honey. Gently unclench your jaw, let your shoulders drop, and take one slow, grounding breath with me."
+            }
+        elif voice_style == "clinical":
+            somatic_anchors = {
+                "sad": "Let us take a slow, deep breath together... let your shoulders drop and notice the quiet safety around you.",
+                "anxious": "Breathe in slowly with me for four seconds... hold... now release, letting your muscles relax, my friend.",
+                "angry": "Let us pause for a moment. Take a long, gentle breath, relax your hands, and observe the space around you.",
+                "happy": "Take a gentle, full breath... allow this positive sensation to register fully in your body.",
+                "neutral": "Let us begin by pausing. Gently unclench your jaw, let your shoulders ease down, and take one slow, grounding breath."
+            }
+        else:
+            somatic_anchors = {
+                "sad": "Let us take a slow, sweet, deep breath together... let your shoulders drop and feel how safe you are right here.",
+                "anxious": "Breathe in slowly and sweetly with me for four seconds... hold... now release, letting all the tension melt away, honey.",
+                "angry": "Let us pause for a moment, my dear. Take a long, gentle breath, relax your hands, and feel my warm presence right beside you.",
+                "happy": "Take a gentle, full breath... feel the warm, lovely light of this moment fill your chest.",
+                "neutral": "Let us begin by pausing. Gently unclench your jaw, let your shoulders ease down, and take one slow, sweet grounding breath with me."
+            }
+        anchor = somatic_anchors.get(final_emotion.lower(), somatic_anchors["neutral"])
+        reply = f"{anchor} {reply}"
+        
+    # Finally, strictly limit to 3 sentences to keep voice interactions engaging, premium, and concise
+    final_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', reply) if s.strip()]
+    if len(final_sentences) > 3:
+        reply = " ".join(final_sentences[:3])
+    elif len(final_sentences) > 0:
+        reply = " ".join(final_sentences)
+
+    # Sanitize partner vocabulary/terms of endearment slips
+    def sanitize_endearments(text: str, mode: str) -> str:
+        mode_str = mode.lower()
+        if mode_str == "girlfriend":
+            # friend / dear friend / my friend -> my love / sweetheart
+            text = re.sub(r'\bmy friend\b', 'my love', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bdear friend\b', 'my love', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bfriend\b', 'sweetheart', text, flags=re.IGNORECASE)
+        elif mode_str == "wife":
+            # friend / dear friend / my friend -> honey / darling
+            text = re.sub(r'\bmy friend\b', 'honey', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bdear friend\b', 'honey', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bfriend\b', 'darling', text, flags=re.IGNORECASE)
+        elif mode_str == "clinical":
+            # my love / sweetheart / honey / darling -> my friend / my dear
+            text = re.sub(r'\bmy love\b', 'my friend', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bsweetheart\b', 'my dear', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bhoney\b', 'my friend', text, flags=re.IGNORECASE)
+            text = re.sub(r'\bdarling\b', 'my dear', text, flags=re.IGNORECASE)
+        return text
+
+    reply = sanitize_endearments(reply, voice_style)
 
     # 5. Record to memory
     await memory.add_entry(user_id, "user", transcribed_text, db)
     await memory.add_entry(user_id, "assistant", reply, db)
 
-    # 6. Advanced TTS modulated by emotion
-    tts_audio_base64 = await voice_interface.text_to_speech_advanced(reply, final_emotion)
+    # 6. Advanced TTS modulated by emotion and voice mode
+    tts_audio_base64 = await voice_interface.text_to_speech_advanced(reply, final_emotion, req.voice_mode or "partner")
 
     return VoiceAssistantResponse(
         emotion=final_emotion,

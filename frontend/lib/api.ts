@@ -13,7 +13,7 @@ const BASE_URL = getApiBaseUrl();
 export const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
-  timeout: 15000,
+  timeout: 45000,
 });
 
 // Token interceptor — attach bearer token from localStorage if available

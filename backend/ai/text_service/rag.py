@@ -11,6 +11,7 @@ from typing import List, Dict
 import os
 import hashlib
 import time
+from core.logging import log
 try:
     from langsmith import traceable
 except ImportError:

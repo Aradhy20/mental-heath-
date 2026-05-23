@@ -10,10 +10,11 @@ from threading import Thread
 import json
 
 # ── Performance globals — set once at module load ─────────────────────────────
-_MAX_NEW_TOKENS = 150      # ↓ from 256. Enough for 2-3 clinical sentences.
-_TEMPERATURE    = 0.75
-_TOP_P          = 0.88
-_REPETITION_PENALTY = 1.15  # Prevents repetitive loops without extra inference
+_MAX_NEW_TOKENS = 45        # Strict limit to prevent list generation / long comments
+_TEMPERATURE    = 0.2       # High coherence, low temperature for SmolLM2 stability
+_TOP_P          = 0.9
+_REPETITION_PENALTY = 1.2   # Prevents repetitive loops and robotic phrases
+
 
 class ChatContext:
     """Manages conversation memory for the LLM"""
@@ -42,12 +43,13 @@ class MentalHealthChatbot:
             
         print(f"[MindfulAI] Loading {model_id} on {self.device} (Low RAM Mode)...")
         
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id, local_files_only=True)
         # Load with standard float32 for CPU stability and memory predictability
         self.model = AutoModelForCausalLM.from_pretrained(
             model_id,
             torch_dtype=torch.float32,
             device_map=None,
+            local_files_only=True,
         )
         
         # ── torch.compile disabled for 8GB RAM machines (compilation is RAM-heavy) ──

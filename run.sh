@@ -51,5 +51,10 @@ echo -e "${GREEN}✓ Backend service started in background (PID: $BACKEND_PID, l
 
 # 4. Boot Next.js dev server
 echo -e "${BLUE}[4/4] Launching Next.js frontend dev server...${RESET}"
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh"
+  nvm use 22
+fi
 cd frontend
 npm run dev

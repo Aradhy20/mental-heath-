@@ -27,6 +27,55 @@ export default function MultimodalInputPage() {
 
   // --- Voice Assistant States & Refs ---
   const [assistantState, setAssistantState] = useState<"idle" | "listening" | "processing" | "speaking">("idle");
+  const [voiceMode, setVoiceMode] = useState<"partner" | "clinical" | "girlfriend" | "wife">("partner");
+
+  const themeMap = {
+    partner: {
+      gradient: "radial-gradient(circle, #6366F1 20%, #818CF8 80%)",
+      shadow: "0 10px 40px rgba(99, 102, 241, 0.25)",
+      accent: "#6366F1",
+      badgeBg: "rgba(99, 102, 241, 0.08)",
+      badgeText: "#6366F1",
+      ringBorder: "3px dashed #6366F1",
+      idleAnim: "pulse-idle-partner 3s infinite ease-in-out",
+      processAnim: "pulse-idle-partner 1s infinite ease-in-out",
+      speakingText: "Listening to your supportive partner..."
+    },
+    clinical: {
+      gradient: "radial-gradient(circle, #7C3AED 20%, #A78BFA 80%)",
+      shadow: "0 10px 40px rgba(124, 58, 237, 0.25)",
+      accent: "#7C3AED",
+      badgeBg: "rgba(124, 58, 237, 0.08)",
+      badgeText: "#7C3AED",
+      ringBorder: "3px dashed #7C3AED",
+      idleAnim: "pulse-idle-clinical 3s infinite ease-in-out",
+      processAnim: "pulse-idle-clinical 1s infinite ease-in-out",
+      speakingText: "Listening to the senior doctor's advice..."
+    },
+    girlfriend: {
+      gradient: "radial-gradient(circle, #EC4899 20%, #F472B6 80%)",
+      shadow: "0 10px 40px rgba(236, 72, 153, 0.25)",
+      accent: "#EC4899",
+      badgeBg: "rgba(236, 72, 153, 0.08)",
+      badgeText: "#EC4899",
+      ringBorder: "3px dashed #EC4899",
+      idleAnim: "pulse-idle-girlfriend 3s infinite ease-in-out",
+      processAnim: "pulse-idle-girlfriend 1s infinite ease-in-out",
+      speakingText: "Listening to your sweetheart..."
+    },
+    wife: {
+      gradient: "radial-gradient(circle, #D97706 20%, #F59E0B 80%)",
+      shadow: "0 10px 40px rgba(217, 119, 6, 0.25)",
+      accent: "#D97706",
+      badgeBg: "rgba(217, 119, 6, 0.08)",
+      badgeText: "#D97706",
+      ringBorder: "3px dashed #D97706",
+      idleAnim: "pulse-idle-wife 3s infinite ease-in-out",
+      processAnim: "pulse-idle-wife 1s infinite ease-in-out",
+      speakingText: "Listening to your devoted wife..."
+    }
+  };
+
   const [assistantReply, setAssistantReply] = useState("");
   const [assistantEmotion, setAssistantEmotion] = useState("");
   const [userTranscript, setUserTranscript] = useState("");
@@ -198,34 +247,39 @@ export default function MultimodalInputPage() {
 
   // Continuous speech recognizer setup for Wake Word "Hey Mindful"
   useEffect(() => {
+    let recognition: any = null;
+
+    const handleResult = (event: any) => {
+      const transcriptText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+      console.log("Wake word speech parsing:", transcriptText);
+      if (transcriptText.includes("hey mindful") || transcriptText.includes("hey midland") || transcriptText.includes("hey mind")) {
+        if (assistantState === "idle") {
+          triggerAssistantSpeechInput();
+        }
+      }
+    };
+
+    const handleEnd = () => {
+      // Keep it running continuously if in assistant mode and assistant is idle
+      if (mode === "assistant" && assistantState === "idle" && wakeWordListening) {
+        try {
+          recognition.start();
+        } catch (e) {}
+      }
+    };
+
     if (typeof window !== "undefined" && mode === "assistant") {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+        recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = false;
         recognition.lang = "en-US";
         
-        recognition.onresult = (event: any) => {
-          const transcriptText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-          console.log("Wake word speech parsing:", transcriptText);
-          if (transcriptText.includes("hey mindful") || transcriptText.includes("hey midland") || transcriptText.includes("hey mind")) {
-            if (assistantState === "idle") {
-              triggerAssistantSpeechInput();
-            }
-          }
-        };
-
-        recognition.onend = () => {
-          // Keep it running continuously if in assistant mode and assistant is idle
-          if (mode === "assistant" && assistantState === "idle" && wakeWordListening) {
-            try {
-              recognition.start();
-            } catch (e) {}
-          }
-        };
+        recognition.addEventListener("result", handleResult);
+        recognition.addEventListener("end", handleEnd);
 
         recognitionRef.current = recognition;
         try {
@@ -235,9 +289,15 @@ export default function MultimodalInputPage() {
     }
 
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.onend = null;
-        recognitionRef.current.stop();
+      if (recognition) {
+        recognition.removeEventListener("result", handleResult);
+        recognition.removeEventListener("end", handleEnd);
+        try {
+          recognition.stop();
+        } catch (e) {}
+      }
+      if (recognitionRef.current === recognition) {
+        recognitionRef.current = null;
       }
     };
   }, [mode, assistantState, wakeWordListening]);
@@ -320,7 +380,8 @@ export default function MultimodalInputPage() {
 
       const res = await api.post("/api/v1/input/voice-assistant", {
         audio_base64: audioBase64,
-        image_base64: imageBase64
+        image_base64: imageBase64,
+        voice_mode: voiceMode
       });
 
       const duration = Math.round(performance.now() - startTime);
@@ -347,7 +408,7 @@ export default function MultimodalInputPage() {
       }
     } catch (err) {
       console.error("Assistant API error", err);
-      setAssistantReply("I had trouble reaching ElevenLabs. Please check your API key details.");
+      setAssistantReply("I am having a brief connection issue with our servers. Let us pause, take a deep breath, and try starting our session again in a moment.");
       setAssistantState("idle");
     }
   };
@@ -363,10 +424,25 @@ export default function MultimodalInputPage() {
       
       {/* Visual Dynamic Keyframes for Orb UI States */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes pulse-idle {
+        @keyframes pulse-idle-partner {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+          70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        @keyframes pulse-idle-clinical {
           0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
           70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(124, 58, 237, 0); }
           100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        }
+        @keyframes pulse-idle-girlfriend {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); }
+          70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(236, 72, 153, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        }
+        @keyframes pulse-idle-wife {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+          70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(217, 119, 6, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
         }
         @keyframes pulse-listening {
           0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6); }
@@ -583,8 +659,8 @@ export default function MultimodalInputPage() {
           </div>
         </div>
       ) : (
-        /* ═══ ASSISTANT VOICE MODE (Glowing Orb Interface) ═══ */
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
+          /* ═══ ASSISTANT VOICE MODE (Glowing Orb Interface) ═══ */
+          <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <div className="glass-card" style={{ padding: "2.5rem", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
             
             {/* Header info */}
@@ -593,14 +669,65 @@ export default function MultimodalInputPage() {
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#10B981" }}>Wake Word Active: say "Hey Mindful"</span>
             </div>
 
+            {/* Premium Glassmorphic Voice Persona Selector */}
+            <div style={{
+              display: "flex",
+              background: "rgba(255, 255, 255, 0.4)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(124, 58, 237, 0.1)",
+              borderRadius: "99px",
+              padding: "0.25rem",
+              gap: "0.25rem",
+              marginBottom: "2.5rem",
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.03)"
+            }}>
+              {[
+                { id: "partner", label: "Partner Mode", color: "#6366F1" },
+                { id: "clinical", label: "Clinical Mode", color: "#7C3AED" },
+                { id: "girlfriend", label: "Sweet Girlfriend", color: "#EC4899" },
+                { id: "wife", label: "Loving Wife", color: "#D97706" }
+              ].map((persona) => {
+                const active = voiceMode === persona.id;
+                return (
+                  <button
+                    key={persona.id}
+                    onClick={() => setVoiceMode(persona.id as any)}
+                    style={{
+                      padding: "0.5rem 1rem",
+                      borderRadius: "99px",
+                      border: "none",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      background: active ? persona.color : "transparent",
+                      color: active ? "#FFFFFF" : "var(--on-surface-muted)",
+                      boxShadow: active ? `0 4px 10px ${persona.color}40` : "none"
+                    }}
+                  >
+                    {persona.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Glowing Orb Container */}
             <div 
               onClick={handleOrbClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleOrbClick();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Toggle Mindful Assistant voice session"
               style={{
                 width: 180,
                 height: 180,
                 borderRadius: "50%",
-                background: "radial-gradient(circle, #7C3AED 20%, #A78BFA 80%)",
+                background: themeMap[voiceMode].gradient,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -609,17 +736,17 @@ export default function MultimodalInputPage() {
                 transition: "all 0.4s ease",
                 animation: 
                   assistantState === "listening" ? "pulse-listening 1.8s infinite ease-in-out" :
-                  assistantState === "processing" ? "pulse-idle 1s infinite ease-in-out" :
+                  assistantState === "processing" ? themeMap[voiceMode].processAnim :
                   assistantState === "speaking" ? "speak-breath 3s infinite ease-in-out" :
-                  "pulse-idle 3s infinite ease-in-out",
-                boxShadow: "0 10px 40px rgba(124, 58, 237, 0.25)"
+                  themeMap[voiceMode].idleAnim,
+                boxShadow: themeMap[voiceMode].shadow
               }}
             >
               {/* Specialized animated rings for states */}
               {assistantState === "processing" && (
                 <div style={{
                   position: "absolute", inset: -8, borderRadius: "50%",
-                  border: "3px dashed #7C3AED",
+                  border: themeMap[voiceMode].ringBorder,
                   animation: "spin-processing 2s linear infinite"
                 }} />
               )}
@@ -647,18 +774,28 @@ export default function MultimodalInputPage() {
             </div>
 
             {/* Orb Info Status */}
-            <div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+            <div style={{ marginTop: "2.5rem", marginBottom: "2rem" }}>
               <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1E1B4B", textTransform: "capitalize", marginBottom: "0.25rem" }}>
-                {assistantState === "idle" && "Mindful Assistant"}
+                {assistantState === "idle" && (
+                  voiceMode === "partner" ? "Supportive Partner" :
+                  voiceMode === "clinical" ? "Clinical Therapist" :
+                  voiceMode === "girlfriend" ? "Sweet Girlfriend" :
+                  "Loving Wife"
+                )}
                 {assistantState === "listening" && "Listening..."}
                 {assistantState === "processing" && "Processing..."}
-                {assistantState === "speaking" && "Mindful speaking"}
+                {assistantState === "speaking" && (
+                  voiceMode === "partner" ? "Partner Speaking" :
+                  voiceMode === "clinical" ? "Clinical Therapist Speaking" :
+                  voiceMode === "girlfriend" ? "Sweetheart Speaking" :
+                  "Wife Speaking"
+                )}
               </h3>
               <p style={{ color: "var(--on-surface-muted)", fontSize: "0.85rem", fontWeight: 600 }}>
-                {assistantState === "idle" && "Tap the orb to start therapy session"}
+                {assistantState === "idle" && "Tap the orb to start safe comforting session"}
                 {assistantState === "listening" && "I'm listening to your voice..."}
-                {assistantState === "processing" && "Generating empathetic response..."}
-                {assistantState === "speaking" && "Listen to the senior doctor's advice"}
+                {assistantState === "processing" && "Generating warm, loving response..."}
+                {assistantState === "speaking" && themeMap[voiceMode].speakingText}
               </p>
             </div>
 
@@ -666,24 +803,27 @@ export default function MultimodalInputPage() {
             {(assistantReply || userTranscript) && (
               <div style={{
                 width: "100%",
-                background: "rgba(124, 58, 237, 0.04)",
-                border: "1px solid rgba(124, 58, 237, 0.1)",
+                background: "rgba(255, 255, 255, 0.4)",
+                backdropFilter: "blur(12px)",
+                border: `1px solid ${themeMap[voiceMode].accent}15`,
                 borderRadius: 16,
                 padding: "1.5rem",
                 textAlign: "left",
                 display: "flex",
                 flexDirection: "column",
-                gap: "1rem"
+                gap: "1rem",
+                boxShadow: `0 4px 20px ${themeMap[voiceMode].accent}03`
               }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
                   {assistantEmotion && (
                     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                       <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--on-surface-muted)", textTransform: "uppercase" }}>Detected Emotion:</span>
                       <span className="badge" style={{
-                        background: "rgba(124, 58, 237, 0.1)",
-                        color: "#7C3AED",
+                        background: `${themeMap[voiceMode].accent}15`,
+                        color: themeMap[voiceMode].accent,
                         fontSize: "0.7rem",
-                        textTransform: "capitalize"
+                        textTransform: "capitalize",
+                        fontWeight: 700
                       }}>{assistantEmotion}</span>
                     </div>
                   )}
@@ -709,7 +849,12 @@ export default function MultimodalInputPage() {
                 </div>
                 {assistantReply && (
                   <div>
-                    <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#7C3AED", marginBottom: "0.25rem" }}>Therapist Advice</p>
+                    <p style={{ fontSize: "0.78rem", fontWeight: 700, color: themeMap[voiceMode].accent, marginBottom: "0.25rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      {voiceMode === "partner" && "Partner Advice"}
+                      {voiceMode === "clinical" && "Clinical Therapist"}
+                      {voiceMode === "girlfriend" && "Sweetheart's Care"}
+                      {voiceMode === "wife" && "Wife's Comfort"}
+                    </p>
                     <p style={{ fontSize: "0.9rem", color: "#1E1B4B", lineHeight: 1.55 }}>{assistantReply}</p>
                   </div>
                 )}
